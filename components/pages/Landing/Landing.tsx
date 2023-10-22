@@ -3,7 +3,6 @@ import cx from 'clsx';
 import { useTheme } from '@madeinhaus/nextjs-theme';
 import { Link } from '@madeinhaus/nextjs-page-transition';
 import Head from 'components/misc/Head';
-import Text from 'components/ui/Text';
 
 import grid from 'styles/modules/grid.module.scss';
 import styles from './Landing.module.scss';
@@ -29,23 +28,23 @@ const Landing = () => {
                 description="A skeleton Next.js app to quickly get started."
             />
             <section className={styles.section}>
-                <Text as="h2" className={styles.sectionHeadline}>
+                <h2 className={cx(styles.sectionHeadline, 'body')}>
                     Demos
-                </Text>
+                </h2>
                 <ul className={styles.links}>
                     {demoLinks.map(({ href, label }, i) => (
                         <li key={i} className={styles.link}>
                             <Link href={href}>
-                                <Text as="span">{label}</Text>
+                                <span>{label}</span>
                             </Link>
                         </li>
                     ))}
                 </ul>
             </section>
             <section className={styles.section}>
-                <Text as="h2" className={styles.sectionHeadline}>
+                <h2 className={cx(styles.sectionHeadline, 'body')}>
                     Theme
-                </Text>
+                </h2>
                 <ul>
                     {['auto', 'light', 'dark'].map(themeValue => (
                         <li key={themeValue}>
@@ -61,13 +60,13 @@ const Landing = () => {
                 </ul>
             </section>
             <section className={styles.section}>
-                <Text as="h2" className={styles.sectionHeadline}>
+                <h2 className={cx(styles.sectionHeadline, 'body')}>
                     Source
-                </Text>
+                </h2>
                 <ul>
                     <li className={styles.link}>
                         <Link href="https://github.com/MadeInHaus/next-starter-ts">
-                            <Text as="span">https://github.com/MadeInHaus/next-starter-ts</Text>
+                            <span>https://github.com/MadeInHaus/next-starter-ts</span>
                         </Link>
                     </li>
                 </ul>

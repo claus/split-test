@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import Head from 'components/misc/Head';
-import Text from 'components/ui/Text';
 
 import styles from './Error.module.scss';
 
@@ -14,7 +13,7 @@ const Error: React.FC<ErrorProps> = ({ statusCode, message }) => {
     return (
         <div className={styles.root}>
             <Head title={`${statusCode} | ${message}`} />
-            <Text>{statusCode}</Text>
+            <p>{statusCode}</p>
         </div>
     );
 };
