@@ -1,0 +1,40 @@
+.root {
+    padding: 3rem 0;
+}
+
+.section {
+    grid-column: 1 / -1;
+
+    &:not(:first-of-type) {
+        margin-top: 3rem;
+    }
+}
+
+.sectionHeadline {
+    margin-bottom: 1rem;
+    font-size: 1.4em;
+}
+
+.themeButton {
+    display: block;
+    text-decoration: none;
+    padding: 0.5rem 0;
+
+    &[disabled] {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.link {
+    padding: 0.5rem 0;
+
+    &:first-of-type {
+        padding-top: 0;
+    }
+
+    > a {
+        text-decoration-color: #888;
+        text-underline-offset: 0.4rem;
+    }
+}

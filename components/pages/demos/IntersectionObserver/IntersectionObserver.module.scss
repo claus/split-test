@@ -1,0 +1,40 @@
+.root {
+    padding: 3rem 0;
+}
+
+.header,
+.intersectingElement {
+    grid-column: 1 / -1;
+}
+
+.controls {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 var(--grid-margin);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    border-bottom: 1px solid var(--border-color-2);
+    background-color: var(--surface-color-2);
+
+    .button {
+        padding: 0.5rem 1rem;
+        background-color: var(--surface-color-1);
+        border: 1px solid var(--border-color-1);
+        border-radius: 0.5rem;
+
+        &:hover {
+            background-color: var(--surface-color-1-hover);
+        }
+    }
+}
+
+.intersectingElement {
+    width: 20rem;
+    height: 20rem;
+    margin-top: 200rem;
+    background-color: red;
+}
