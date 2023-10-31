@@ -25,19 +25,37 @@
     text-underline-offset: 0.4rem;
 }
 
-.phase {
+.themeToggle {
     grid-column: 5 / span 2;
     justify-self: end;
     text-align: end;
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+
+    &::before {
+        content: attr(data-title);
+        display: none;
+        align-self: center;
+    }
 }
 
-.phasePrefix {
-    display: none;
+.themeButton {
+    display: block;
+    text-decoration: none;
+    padding: 0.5rem 0;
+
+    &[disabled] {
+        opacity: 0.4;
+        cursor: default;
+    }
 }
 
 @include medium {
-    .phasePrefix {
-        display: inline;
+    .themeToggle {
+        &::before {
+            display: block;
+        }
     }
 }
 
@@ -46,7 +64,7 @@
         grid-column: 1 / span 6;
     }
 
-    .phase {
+    .themeToggle {
         grid-column: 7 / span 6;
     }
 }

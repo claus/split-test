@@ -1,3 +1,5 @@
+@import 'styles/breakpoints';
+
 .root {
     padding: 3rem 0;
 }
@@ -26,15 +28,47 @@
     }
 }
 
-.link {
-    padding: 0.5rem 0;
+.test {
+    position: relative;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 80px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    line-height: 1.1em;
+    // white-space: pre;
 
-    &:first-of-type {
-        padding-top: 0;
+    img,
+    svg {
+        display: inline;
     }
 
-    > a {
-        text-decoration-color: #888;
-        text-underline-offset: 0.4rem;
+    i {
+        font-style: normal;
+    }
+
+    @include medium {
+        font-size: 120px;
+    }
+}
+
+.normal {
+    color: unset;
+}
+
+.modified {
+    // opacity: 0.8;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: green;
+    font-kerning: none;
+
+    [data-type="char"] {
+        // display: inline-block;
+        // transition: margin 0.5s calc(var(--index) * 0.15s), transform 0.75s calc(var(--index) * 0.075s);
+        // margin-right: 0 !important;
+        // transform: translateY(calc(var(--index) * 20px));
+        // text-decoration: inherit;
     }
 }
