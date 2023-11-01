@@ -24,6 +24,12 @@ interface SplitOptions {
     graphemeSplitter?: (str: string) => string[];
 }
 
+function walk(node: Node, func: (node: Node) => void) {
+    var children = node.childNodes;
+    for (var i = 0; i < children.length; i++) walk(children[i], func);
+    func(node);
+}
+
 function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
     const {
         dataTypeName = 'type',
@@ -145,9 +151,9 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
                     return key.replace(`</${elClone.nodeName.toLowerCase()}>`, '');
                 })
                 .join(' | ');
-            console.log(`-------\n${aKey}\n${bKey}`);
+            console.log(`-------\n${aKey} # ${bKey}`);
             return {
-                key: `${aKey}\n${bKey}`,
+                key: `${aKey} # ${bKey}`,
                 elements: [
                     { span: aPath.at(-1)!, path: aPath, key: aKey },
                     { span: bPath.at(-1)!, path: bPath, key: bKey },
@@ -185,24 +191,31 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
 
     console.log(uniquePairs);
 
-    interface Wrapper extends Pair {
+    interface MeasureElement extends Pair {
         wrapper: HTMLElement;
     }
 
-    const wrappers: Wrapper[] = uniquePairs.map(({ key, elements }) => {
+    // Deep-clone the two elements of each unique pair and wrap them
+    // in a div for measuring the "kerning" (the difference in width
+    // between one of the clones rendered with `kerning: normal` and
+    // the other with `kerning: none`.
+    const measureElements: MeasureElement[] = uniquePairs.map(({ key, elements }) => {
         const { span: a, path: aPath } = elements[0];
         const { span: b, path: bPath } = elements[1];
-        const wrapper = document.createElement('div');
-        const wrapperStyles = [
-            // { property: 'all', value: 'unset' },
+        const measureEl = document.createElement('div');
+        const measureElStyles = [
+            { property: 'all', value: 'unset' },
             { property: 'display', value: 'block' },
             { property: 'white-space', value: 'pre' },
             { property: 'width', value: 'fit-content' },
         ];
-        wrapperStyles.forEach(({ property, value }) => wrapper.style.setProperty(property, value));
+        measureElStyles.forEach(({ property, value }) => {
+            measureEl.style.setProperty(property, value);
+        });
         let i = 0;
-        let currentRoot: HTMLElement = wrapper;
+        let currentRoot: HTMLElement = measureEl;
         const maxPathLen = Math.max(aPath.length, bPath.length);
+        // Find the common root and reconstruct the DOM structure up to that point
         while (aPath[i] === bPath[i] && i < maxPathLen) {
             if (aPath[i]) {
                 const newRoot = aPath[i].cloneNode(false) as HTMLElement;
@@ -211,36 +224,30 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
             }
             i++;
         }
-        let j = i;
-        let aCurrentRoot = currentRoot;
-        while (aPath[j]) {
-            const isSpan = aPath[j] === a;
-            const newEl = (
-                isSpan ? aPath[j].firstChild?.cloneNode(true) : aPath[j].cloneNode(false)
-            ) as HTMLElement;
-            aCurrentRoot.appendChild(newEl);
-            aCurrentRoot = newEl;
-            j++;
+        // Reconstruct the DOM structure of the two paths,
+        // each from the common root down to the span leave
+        // and append them to the common root.
+        function reconstruct(
+            index: number,
+            path: HTMLElement[],
+            span: HTMLElement,
+            currentRoot: HTMLElement
+        ) {
+            while (path[index]) {
+                const el = path[index++];
+                const isSpan = el === span;
+                const newEl = (
+                    isSpan ? el.firstChild?.cloneNode(true) : el.cloneNode(false)
+                ) as HTMLElement;
+                currentRoot.appendChild(newEl);
+                currentRoot = newEl;
+            }
         }
-        let k = i;
-        let bCurrentRoot = currentRoot;
-        while (bPath[k]) {
-            const isSpan = bPath[k] === b;
-            const newEl = (
-                isSpan ? bPath[k].firstChild?.cloneNode(true) : bPath[k].cloneNode(false)
-            ) as HTMLElement;
-            bCurrentRoot.appendChild(newEl);
-            bCurrentRoot = newEl;
-            k++;
-        }
+        reconstruct(i, aPath, a, currentRoot);
+        reconstruct(i, bPath, b, currentRoot);
         // Normalize text nodes
         // Safari needs this
-        function walk(node: Node, func: (node: Node) => void) {
-            var children = node.childNodes;
-            for (var i = 0; i < children.length; i++) walk(children[i], func);
-            func(node);
-        }
-        walk(wrapper, node => {
+        walk(measureEl, node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 (node as HTMLElement).normalize();
             }
@@ -248,80 +255,86 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         return {
             key,
             elements,
-            wrapper,
+            wrapper: measureEl,
         };
     });
 
-    console.log(wrappers);
+    console.log(measureElements);
 
     // create a div and add all wrappers from measure to it
-    const divKern = document.createElement('div');
-    const divNoKern = document.createElement('div');
-    wrappers.forEach(({ wrapper }) => {
-        divKern.appendChild(wrapper).cloneNode(true);
-        divNoKern.appendChild(wrapper.cloneNode(true));
+    const measureDivKern = document.createElement('div');
+    const measureDivNoKern = document.createElement('div');
+    measureElements.forEach(({ wrapper }) => {
+        measureDivKern.appendChild(wrapper).cloneNode(true);
+        measureDivNoKern.appendChild(wrapper.cloneNode(true));
     });
 
-    const setDivStyles = (element: HTMLElement, kern: boolean) => {
+    const setMeasureDivStyles = (element: HTMLElement, kern: boolean) => {
         const styles = [
-            { property: 'display', value: 'contents' },
+            { property: 'all', value: 'unset' },
+            { property: 'position', value: 'absolute' },
             { property: 'font-kerning', value: kern ? 'normal' : 'none' },
             { property: 'font-feature-settings', value: `"kern" ${kern ? 'on' : 'off'}` },
         ];
         styles.forEach(({ property, value }) => element.style.setProperty(property, value));
     };
 
-    divKern.dataset[dataTypeName] = 'kern';
-    setDivStyles(divKern, true);
-    elSplit.insertBefore(divKern, elSplit.firstChild);
+    measureDivKern.dataset[dataTypeName] = 'kern';
+    setMeasureDivStyles(measureDivKern, true);
+    elSplit.insertBefore(measureDivKern, elSplit.firstChild);
 
-    divNoKern.dataset[dataTypeName] = 'nokern';
-    setDivStyles(divNoKern, false);
-    elSplit.insertBefore(divNoKern, elSplit.firstChild);
+    measureDivNoKern.dataset[dataTypeName] = 'nokern';
+    setMeasureDivStyles(measureDivNoKern, false);
+    elSplit.insertBefore(measureDivNoKern, elSplit.firstChild);
 
     // Swap split element into the DOM
     el.parentNode?.replaceChild(elSplit, el);
 
     // Measure kerning values
-    const fontSize = parseFloat(window.getComputedStyle(elSplit).getPropertyValue('font-size'));
-    const kerningValues = mappable(wrappers.length).map(i => {
-        const kernWidth = (divKern.childNodes[i] as HTMLElement).getBoundingClientRect().width;
-        const noKernWidth = (divNoKern.childNodes[i] as HTMLElement).getBoundingClientRect().width;
+    const kerningValues = mappable(measureElements.length).map(i => {
+        const measureElKern = measureDivKern.childNodes[i] as HTMLElement;
+        const measureElNoKern = measureDivNoKern.childNodes[i] as HTMLElement;
+        const kernWidth = measureElKern.getBoundingClientRect().width;
+        const noKernWidth = measureElNoKern.getBoundingClientRect().width;
+        let tmp = measureElKern;
+        while (tmp.firstChild?.nodeType === Node.ELEMENT_NODE) {
+            tmp = tmp.firstChild as HTMLElement;
+        }
+        const fontSize = parseFloat(window.getComputedStyle(tmp).getPropertyValue('font-size'));
         return (kernWidth - noKernWidth) / fontSize;
     });
 
-    console.log(fontSize, kerningValues);
+    console.log(kerningValues);
 
     // Swap original element back into the DOM
     elSplit.parentNode?.replaceChild(el, elSplit);
 
-    elSplit.removeChild(divKern);
-    elSplit.removeChild(divNoKern);
+    elSplit.removeChild(measureDivKern);
+    elSplit.removeChild(measureDivNoKern);
 
+    // Apply kerning values
+    // For all pairs, find
     pairs.forEach(({ key, elements }) => {
         const { span } = elements[0];
         console.log(`"${span.textContent}${elements[1].span.textContent}"`);
-        const index = wrappers.findIndex(({ key: k }) => k === key);
+        const index = measureElements.findIndex(({ key: k }) => k === key);
         if (index !== -1) {
             if (kerningValues[index]) {
                 span.style.setProperty('margin-right', `${kerningValues[index]}em`);
             }
         } else {
-            console.log('not found', key);
+            console.log('Kerning pair not found', key);
         }
     });
 
     let charIndex = 0;
     spans.forEach(span => {
         const type = span.dataset[dataTypeNameInternal];
-        const hasLetter = span.textContent?.trim().length; // TODO: Does this work for all kinds of whitespeces?
+        const hasLetter = span.textContent?.trim().length; // TODO: Does this work for all kinds of whitespaces?
         if (type === 'char') {
-            if (!hasLetter) {
-                // This is a whitespace character, set `data-whitespace`
-                span.dataset[dataTypeWhitespace] = '';
-            }
-            // Rename `data-type-internal` to `data-type`
-            span.dataset[dataTypeName] = type;
+            // Rename internal data type attribute to public facing one
+            // and set it to 'whitespace' if it's a whitespace character
+            span.dataset[dataTypeName] = hasLetter ? type : 'whitespace';
             delete span.dataset[dataTypeNameInternal];
         }
         if (type !== 'char' || hasLetter) {
@@ -336,17 +349,16 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
 }
 
 const Landing = () => {
-    const test = React.useRef<HTMLDivElement>(null);
+    const original = React.useRef<HTMLDivElement>(null);
     const modified = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
+        if (!modified.current || !original.current) return;
         const splitter = new Graphemer();
         const elMod = modified.current;
-        const elNormal = split(test.current!, {
+        const elNormal = split(original.current!, {
             graphemeSplitter: string => splitter.splitGraphemes(string),
         });
-        while (elMod?.firstChild && elMod?.lastChild) {
-            elMod?.removeChild(elMod?.lastChild);
-        }
+        elMod.innerHTML = '';
         if (elNormal) {
             for (const node of Array.from(elNormal?.childNodes ?? [])) {
                 elMod?.appendChild(node);
@@ -357,21 +369,21 @@ const Landing = () => {
         <div className={cx(styles.root, grid.container)}>
             <Head title="Split Text" description="Split Text Experiments" />
             <section className={styles.section}>
-                <h2 className={cx(styles.sectionHeadline, 'body')}>Test</h2>
                 <div className={styles.test}>
                     <div
-                        ref={test}
-                        className={styles.normal}
+                        ref={original}
+                        className={styles.original}
                         dangerouslySetInnerHTML={{
-                            // __html: 'X <![CDATA[ xxx ]]> <!-- --> <b><img class="abc" src=""></b>  <i>   A   <b>   B  </b> \u006E\u0303 <a href="https://madeinhaus.com">AVAVAV</a> </i> ',
-                            __html: 'A <b>W</b>',
+                            __html: 'X <![CDATA[ xxx ]]> <!-- --> <b><img class="abc" src=""></b>  <i>   A   <b>   B  </b> \u006E\u0303 <a href="https://madeinhaus.com">AVAVAV</a> </i> ',
+                            // __html: 'A <b>W</b>',
+                            // __html: 'W <i> A <a href="https://madeinhaus.com">A</a> </i>',
                             // __html: 'https://<a href="https://madeinhaus.com">madeinhaus.com</a>',
-                            // __html: 'The quick brown fox <i><b>jumps</b></i> over the lazy dog.',
+                            __html: 'The quick brown fox <i><b>jumps</b></i> over the lazy dog.',
                             // __html: 'h̷̛͈͆̀͋͠e̷̢̮̩̙͐͒l̴̢̨̅͑l̸͍̩̗͌̄o̵̫͖̘̰̿̒͆̈́̍',
                             // __html: 'A<i>V<a href="https://madeinhaus.com">AV</a></i>AV',
                         }}
                     />
-                    <div ref={modified} className={styles.modified} />
+                    <div ref={modified} className={styles.split} />
                 </div>
             </section>
         </div>
