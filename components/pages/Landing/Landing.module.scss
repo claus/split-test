@@ -30,6 +30,9 @@
 
 .test {
     position: relative;
+    display: grid;
+    grid-area: 1 / -1;
+
     font-family: 'Helvetica', 'Arial', sans-serif;
     font-size: 80px;
     font-weight: 700;
@@ -47,28 +50,32 @@
         font-style: normal;
     }
 
+    a {
+        font-size: 1.3em;
+    }
+
     @include medium {
         font-size: 120px;
     }
 }
 
-.normal {
+.original {
+    grid-row: 1;
+    grid-column: 1;
     color: unset;
 }
 
-.modified {
-    // opacity: 0.8;
-    position: absolute;
-    top: 0;
-    left: 0;
+.split {
+    grid-row: 1;
+    grid-column: 1;
     color: green;
     font-kerning: none;
 
     [data-type="char"] {
-        // display: inline-block;
-        // transition: margin 0.5s calc(var(--index) * 0.15s), transform 0.75s calc(var(--index) * 0.075s);
+        display: inline-block;
+        transition: margin 0.5s calc(var(--index) * 0.15s), transform 0.75s calc(var(--index) * 0.075s);
         // margin-right: 0 !important;
         // transform: translateY(calc(var(--index) * 20px));
-        // text-decoration: inherit;
+        text-decoration: inherit;
     }
 }
