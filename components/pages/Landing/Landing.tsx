@@ -195,9 +195,11 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
                 siblingNode = siblingNode?.nextSibling ?? null;
             }
         }
-        const isDuplicate = pairSet.has(key);
-        pairSet.add(key);
-        return !isDuplicate;
+        if (!pairSet.has(key)) {
+            pairSet.add(key);
+            return true;
+        }
+        return false;
     });
 
     console.log(uniquePairs);
@@ -246,9 +248,8 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         ) {
             while (path[index]) {
                 const el = path[index++];
-                const isSpan = el === span;
                 const newEl = (
-                    isSpan ? el.firstChild?.cloneNode(true) : el.cloneNode(false)
+                    el === span ? el.firstChild?.cloneNode(true) : el.cloneNode(false)
                 ) as HTMLElement;
                 currentRoot.appendChild(newEl);
                 currentRoot = newEl;
@@ -272,7 +273,7 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
 
     console.log(measureElements);
 
-    // create a div and add all wrappers from measure to it
+    // Create a div and add all measureElement wrappers to it
     const measureDivKern = document.createElement('div');
     const measureDivNoKern = document.createElement('div');
     measureElements.forEach(({ wrapper }) => {
@@ -327,24 +328,24 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
     // For all pairs, find
     pairs.forEach(({ key, elements }) => {
         const { span } = elements[0];
-        console.log(`"${span.textContent}${elements[1].span.textContent}"`);
+        console.log(`"${elements[0].span.textContent}${elements[1].span.textContent}"`);
         const index = measureElements.findIndex(({ key: k }) => k === key);
         if (index !== -1) {
             if (kerningValues[index]) {
                 span.style.setProperty('margin-right', `${kerningValues[index]}em`);
             }
         } else {
-            console.log('Kerning pair not found', key);
+            console.log(`Kerning pair not found: {${key}}`);
         }
     });
 
     let charIndex = 0;
     spans.forEach(span => {
         const type = span.dataset[dataTypeNameInternal];
-        const hasLetter = span.textContent?.trim().length; // TODO: Does this work for all kinds of whitespaces?
+        const hasLetter = !span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
         if (type === 'char') {
             // Rename internal data type attribute to public facing one
-            // and set it to 'whitespace' if it's a whitespace character
+            // and set the value to 'whitespace' if it's a whitespace character
             span.dataset[dataTypeName] = hasLetter ? type : 'whitespace';
             delete span.dataset[dataTypeNameInternal];
         }
@@ -375,6 +376,7 @@ const Landing = () => {
                 elMod?.appendChild(node);
             }
         }
+        console.log(elMod.innerText);
     }, []);
     return (
         <div className={cx(styles.root, grid.container)}>
@@ -389,9 +391,11 @@ const Landing = () => {
                             // __html: 'A <b>W</b>',
                             // __html: 'W <i> A <a href="https://madeinhaus.com">A</a> </i>',
                             // __html: 'https://<a href="https://madeinhaus.com">madeinhaus.com</a>',
-                            __html: 'The quick brown fox <i><b>jumps</b></i> over the lazy dog.',
+                            // __html: 'The quick brown fox <i><b>jumps</b></i> over the lazy dog.',
                             // __html: 'h̷̛͈͆̀͋͠e̷̢̮̩̙͐͒l̴̢̨̅͑l̸͍̩̗͌̄o̵̫͖̘̰̿̒͆̈́̍',
-                            // __html: 'A<i>V<a href="https://madeinhaus.com">AV</a></i>AV',
+                            // __html: 'a\u200Bbbb\u200Exyz\u200Fxyz\uFEFFg\th\ni\r\n j',
+                            // __html: '<div>V<a class="hello" style="display: inline; position: relative; top: 10rem;" href="https://madeinhaus.com">AVAV</a><div style="padding: 2rem;">AV</div></div>',
+                            __html: 'A<div>V <a href="https://madeinhaus.com">AVAV</a></div>AV <i>AYAYAVAVAVAVAV AVAVAVAVAV</i> AVAVAVA',
                         }}
                     />
                     <div ref={modified} className={styles.split} />
