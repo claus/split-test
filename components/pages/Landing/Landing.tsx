@@ -30,6 +30,23 @@ function walk(node: Node, func: (node: Node) => void) {
     func(node);
 }
 
+function toSelector(node: Element, attributeIgnoreList: string[] = []) {
+    attributeIgnoreList = [...new Set([...attributeIgnoreList, 'id', 'class'])];
+    let selector = node.nodeName.toLowerCase();
+    const id = node.getAttribute('id');
+    if (id != null) {
+        selector += '#' + id;
+    }
+    selector += Array.from(node.classList)
+        .map(className => `.${className}`)
+        .join('');
+    selector += Array.from(node.attributes)
+        .filter(({ name }) => !attributeIgnoreList.includes(name))
+        .map(({ name, value }) => (value ? `[${name}="${value}"]` : `[${name}]`))
+        .join('');
+    return selector;
+}
+
 function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
     const {
         dataTypeName = 'type',
@@ -40,6 +57,7 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         graphemeSplitter = string => [...string.normalize('NFC')],
     } = options;
     const dataTypeNameInternal = `${dataTypeName}internal`;
+
     const splitNode = (node: Node) => {
         const children = Array.from(node.childNodes).reverse();
         for (const child of children) {
@@ -123,34 +141,27 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
             return acc;
         }, [] as HTMLSpanElement[][])
         .map(([a, b]) => {
-            const aSpan = a;
-            const bSpan = b;
-            const aPath = [a];
-            const bPath = [b];
-            while (a.parentElement && a.parentElement !== elSplit) {
-                a = a.parentElement;
-                aPath.unshift(a);
+            function getPathAndSelector(
+                rootEl: HTMLElement,
+                childEl: HTMLElement
+            ): [HTMLElement[], string] {
+                const path: HTMLElement[] = [childEl];
+                let el = childEl;
+                while (el.parentElement && el.parentElement !== rootEl) {
+                    el = el.parentElement;
+                    path.unshift(el);
+                }
+                const selector = path
+                    .map(el => {
+                        const selector = toSelector(el, [`data-${dataTypeNameInternal}`]);
+                        const text = el === childEl ? el.textContent ?? '' : '';
+                        return selector + (text.length ? ` \{${text}}` : '');
+                    })
+                    .join(' > ');
+                return [path, selector];
             }
-            while (b.parentElement && b.parentElement !== elSplit) {
-                b = b.parentElement;
-                bPath.unshift(b);
-            }
-            const aKey = aPath
-                .map(el => {
-                    const elClone = el.cloneNode(el === aSpan) as HTMLElement;
-                    delete elClone.dataset[dataTypeNameInternal];
-                    const key = elClone.outerHTML;
-                    return key.replace(`</${elClone.nodeName.toLowerCase()}>`, '');
-                })
-                .join(' | ');
-            const bKey = bPath
-                .map(el => {
-                    const elClone = el.cloneNode(el === bSpan) as HTMLElement;
-                    delete elClone.dataset[dataTypeNameInternal];
-                    const key = elClone.outerHTML;
-                    return key.replace(`</${elClone.nodeName.toLowerCase()}>`, '');
-                })
-                .join(' | ');
+            const [aPath, aKey] = getPathAndSelector(elSplit, a);
+            const [bPath, bKey] = getPathAndSelector(elSplit, b);
             console.log(`-------\n${aKey} # ${bKey}`);
             return {
                 key: `${aKey} # ${bKey}`,
