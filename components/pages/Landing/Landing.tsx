@@ -16,6 +16,7 @@ interface SplitOptions {
     dataTypeWhitespace?: string;
     /* The custom property added to span wrappers to get the index. Default: "--index"  */
     indexCustomProp?: string;
+    totalCustomProp?: string;
     /* Whitelist of selectors to wrap in spans. Default: ["img", "svg"] */
     whitelistSelectors?: string[];
     /* Whether to adjust kerning. Default: true */
@@ -52,13 +53,14 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         dataTypeName = 'type',
         dataTypeWhitespace = 'whitespace',
         indexCustomProp = '--index',
+        totalCustomProp = '--total',
         whitelistSelectors = ['img', 'svg'],
         adjustKerning = true,
         graphemeSplitter = string => [...string.normalize('NFC')],
     } = options;
     const dataTypeNameInternal = `${dataTypeName}internal`;
 
-    const splitNode = (node: Node) => {
+    const splitCharacters = (node: Node) => {
         const children = Array.from(node.childNodes).reverse();
         for (const child of children) {
             switch (child.nodeType) {
@@ -71,7 +73,7 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
                         span.dataset[dataTypeName] = child.nodeName.toLowerCase();
                         span.appendChild(child);
                     } else {
-                        splitNode(child);
+                        splitCharacters(child);
                     }
                     break;
                 }
@@ -103,16 +105,31 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         return node;
     };
 
-    console.log(`"${el.innerText}"`);
+    const splitLines = (node: Node) => {
+        const rootEl = node as HTMLElement;
+        const blocks = rootEl.innerText.split('\n');
+        const spans = Array.from(
+            rootEl.querySelectorAll<HTMLSpanElement>(`[data-${dataTypeNameInternal}]`)
+        );
+        console.log(blocks);
+        console.log(blocks.map(block => block.length));
+        console.log(blocks.reduce((acc, block) => acc + block.length, 0));
+        console.log(spans);
+        blocks.forEach((block, i) => {
+            const span = document.createElement('span');
+            span.dataset[dataTypeName] = 'line';
+            // ...
+            // rootEl.appendChild(span);
+        });
+    };
 
     // Swap split element into the DOM
     const elSplit = el.cloneNode(true) as HTMLElement;
     el.parentNode?.replaceChild(elSplit, el);
 
     // Do the splitting
-    splitNode(elSplit);
-
-    console.log(`"${elSplit.innerText}"`);
+    splitCharacters(elSplit);
+    splitLines(elSplit);
 
     // Swap original element back into the DOM
     elSplit.parentNode?.replaceChild(el, elSplit);
@@ -357,27 +374,48 @@ function split(el: HTMLElement, options: SplitOptions = {}): HTMLElement {
         }
     });
 
+    elSplit.style.setProperty(totalCustomProp, charIndex.toString());
+    // console.log(charIndex, elSplit);
+
     return elSplit;
 }
 
-const Landing = () => {
+interface LandingProps {
+    font: {
+        style: {
+            fontFamily: string;
+        };
+    };
+}
+
+const Landing: React.FC<LandingProps> = ({ font }) => {
     const original = React.useRef<HTMLDivElement>(null);
     const modified = React.useRef<HTMLDivElement>(null);
+    const [fontLoaded, setFontLoaded] = React.useState(false);
+
     React.useEffect(() => {
         if (!modified.current || !original.current) return;
+        if (!fontLoaded) return;
         const splitter = new Graphemer();
         const elMod = modified.current;
         const elNormal = split(original.current!, {
             graphemeSplitter: string => splitter.splitGraphemes(string),
         });
-        elMod.innerHTML = '';
-        if (elNormal) {
-            for (const node of Array.from(elNormal?.childNodes ?? [])) {
-                elMod?.appendChild(node);
-            }
-        }
-        console.log(elMod.innerText);
-    }, []);
+        elMod.parentElement?.replaceChild(elNormal, elMod);
+        elNormal.classList.remove(styles.original);
+        elNormal.classList.add(styles.split);
+    }, [fontLoaded]);
+
+    React.useEffect(() => {
+        const WebFont = require('webfontloader');
+        WebFont.load({
+            custom: { families: [font.style.fontFamily] },
+            active: () => {
+                setFontLoaded(true);
+            },
+        });
+    });
+
     return (
         <div className={cx(styles.root, grid.container)}>
             <Head title="Split Text" description="Split Text Experiments" />
@@ -395,7 +433,8 @@ const Landing = () => {
                             // __html: 'h̷̛͈͆̀͋͠e̷̢̮̩̙͐͒l̴̢̨̅͑l̸͍̩̗͌̄o̵̫͖̘̰̿̒͆̈́̍',
                             // __html: 'a\u200Bbbb\u200Exyz\u200Fxyz\uFEFFg\th\ni\r\n j',
                             // __html: '<div>V<a class="hello" style="display: inline; position: relative; top: 10rem;" href="https://madeinhaus.com">AVAV</a><div style="padding: 2rem;">AV</div></div>',
-                            __html: 'A<div>V <a href="https://madeinhaus.com">AVAV</a></div>AV <i>AYAYAVAVAVAVAV AVAVAVAVAV</i> AVAVAVA',
+                            // __html: 'A<div>V <a href="https://madeinhaus.com">AVAV</a></div>A\u200BV <i>AYAYAVAVAVAVAV AVAVAVAVAV</i> AVAVAVA',
+                            __html: 'AVATPAY',
                         }}
                     />
                     <div ref={modified} className={styles.split} />

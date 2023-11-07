@@ -1,3 +1,5 @@
+import { hausHeadlineFont } from 'fonts';
+
 // Resets, global styles
 import 'styles/global/reset.scss';
 import 'styles/global/theme.scss';
@@ -46,8 +48,8 @@ export default function App({ Component, pageProps }: AppProps) {
             <Head />
             <PageTransitionContext>
                 <Header />
-                <PageTransition className={cx(styles.main, 'body')}>
-                    <Component {...pageProps} key={key} />
+                <PageTransition className={cx(styles.main, hausHeadlineFont.variable, 'body')}>
+                    <Component {...pageProps} font={hausHeadlineFont} key={key} />
                 </PageTransition>
             </PageTransitionContext>
             <GridOverlay />
