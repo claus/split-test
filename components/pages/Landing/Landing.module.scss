@@ -29,19 +29,16 @@
 }
 
 .test {
-    --axis: "ss01";
-
     position: relative;
     display: grid;
     grid-area: 1 / -1;
 
-    // font-family: 'Helvetica', 'Arial', sans-serif;
-    font-family: var(--haus-headline-font);
-    font-feature-settings: "kern", var(--axis);
-    font-variation-settings: "wght" 100;
-    font-size: 120px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 80px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
     text-transform: uppercase;
-    // line-height: 1.1em;
+    line-height: 1.1em;
 
     img,
     svg {
@@ -57,7 +54,7 @@
     }
 
     @include medium {
-        font-size: 200px;
+        font-size: 120px;
     }
 }
 
@@ -65,83 +62,21 @@
     grid-row: 1;
     grid-column: 1;
     color: unset;
-    opacity: 0;
     pointer-events: none;
+    font-feature-settings: "kern";
 }
 
 .split {
     grid-row: 1;
     grid-column: 1;
-    // color: green;
-    animation: font 10s infinite;
+    color: green;
+    font-feature-settings: "kern" off;
 
     [data-type="char"] {
-        // display: inline-block;
+        display: inline-block;
         // transition: margin 0.5s calc(var(--index) * 0.15s), transform 0.75s calc(var(--index) * 0.075s);
         // margin-right: 0 !important;
         // transform: translateY(calc(var(--index) * 20px));
         text-decoration: inherit;
-    }
-}
-
-@keyframes font {
-    0% {
-        font-feature-settings: "kern" off, "ss01";
-        font-variation-settings: "wght" 100;
-    }
-
-    16% {
-        font-feature-settings: "kern" off, "ss01";
-        font-variation-settings: "wght" 900;
-    }
-
-    17% {
-        font-feature-settings: "kern" off, "ss02";
-        font-variation-settings: "wght" 100;
-    }
-
-    32% {
-        font-feature-settings: "kern" off, "ss02";
-        font-variation-settings: "wght" 900;
-    }
-
-    33% {
-        font-feature-settings: "kern" off, "ss03";
-        font-variation-settings: "wght" 100;
-    }
-
-    48% {
-        font-feature-settings: "kern" off, "ss03";
-        font-variation-settings: "wght" 900;
-    }
-
-    49% {
-        font-feature-settings: "kern" off, "ss04";
-        font-variation-settings: "wght" 100;
-    }
-
-    64% {
-        font-feature-settings: "kern" off, "ss04";
-        font-variation-settings: "wght" 900;
-    }
-
-    65% {
-        font-feature-settings: "kern" off, "ss05";
-        font-variation-settings: "wght" 100;
-    }
-
-    80% {
-        font-feature-settings: "kern" off, "ss05";
-        font-variation-settings: "wght" 900;
-    }
-
-    81% {
-        font-feature-settings: "kern" off, "ss06";
-        font-variation-settings: "wght" 100;
-    }
-
-    100% {
-        font-feature-settings: "kern" off, "ss06";
-        font-variation-settings: "wght" 900;
     }
 }
