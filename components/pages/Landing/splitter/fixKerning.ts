@@ -13,9 +13,6 @@ interface Pair {
 export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
     const spans = Array.from(elSplit.querySelectorAll<HTMLSpanElement>(`[data-typeinternal]`));
 
-    // console.log(spans);
-    const t = performance.now();
-
     const pairs: Pair[] = spans
         // Only use spans that contain text (no wrapped images etc.)
         .filter(span => span.dataset.typeinternal === 'char')
@@ -42,7 +39,6 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
             }
             const [aPath, aKey] = getPathAndSelector(elSplit, a);
             const [bPath, bKey] = getPathAndSelector(elSplit, b);
-            // console.log(`-------\n${aKey} # ${bKey}`);
             return {
                 key: `${aKey} # ${bKey}`,
                 elements: [
@@ -81,8 +77,6 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
         return false;
     });
 
-    // console.log(uniquePairs);
-
     interface MeasureElement extends Pair {
         wrapper: HTMLElement;
     }
@@ -94,6 +88,7 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
     const measureElements: MeasureElement[] = uniquePairs.map(({ key, elements }) => {
         const { span: a, path: aPath } = elements[0];
         const { span: b, path: bPath } = elements[1];
+
         const measureEl = document.createElement('div');
         const measureElStyles = [
             { property: 'all', value: 'unset' },
@@ -104,9 +99,11 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
         measureElStyles.forEach(({ property, value }) => {
             measureEl.style.setProperty(property, value);
         });
+
         let i = 0;
         let currentRoot: HTMLElement = measureEl;
         const maxPathLen = Math.max(aPath.length, bPath.length);
+
         // Find the common root and reconstruct the DOM structure up to that point
         while (aPath[i] === bPath[i] && i < maxPathLen) {
             if (aPath[i]) {
@@ -116,6 +113,7 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
             }
             i++;
         }
+
         // Reconstruct the DOM structure of the two paths,
         // each from the common root down to the span leave
         // and append them to the common root.
@@ -136,22 +134,17 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
         }
         reconstruct(i, aPath, a, currentRoot);
         reconstruct(i, bPath, b, currentRoot);
+
         // Normalize text nodes
         // Safari needs this
         measureEl.normalize();
-        // walk(measureEl, node => {
-        //     if (node.nodeType === Node.ELEMENT_NODE) {
-        //         (node as HTMLElement).normalize();
-        //     }
-        // });
+
         return {
             key,
             elements,
             wrapper: measureEl,
         };
     });
-
-    // console.log(measureElements);
 
     // Create a div and add all measureElement wrappers to it
     const measureDivKern = document.createElement('div');
@@ -196,8 +189,6 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
         return (kernWidth - noKernWidth) / fontSize;
     });
 
-    // console.log(kerningValues);
-
     // Swap original element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
@@ -208,7 +199,6 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
     // For all pairs, find
     pairs.forEach(({ key, elements }) => {
         const { span } = elements[0];
-        // console.log(`"${elements[0].span.textContent}${elements[1].span.textContent}"`);
         const index = measureElements.findIndex(({ key: k }) => k === key);
         if (index !== -1) {
             if (kerningValues[index]) {
@@ -238,7 +228,4 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
     });
 
     elSplit.style.setProperty('--total-chars', charIndex.toString());
-    // console.log(charIndex, elSplit);
-
-    const timeKern = performance.now() - t;
 }

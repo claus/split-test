@@ -126,14 +126,16 @@ const splitLines = (blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] => {
         line++;
         return blockBucketMeasured;
     });
-    // console.log(blockBucketsMeasured);
+
     let currentLine = 0;
+
     const lines: {
         rootEl: HTMLElement;
         isOneLiner: boolean;
         startSpan: HTMLSpanElement;
         endSpan: HTMLSpanElement;
     }[] = [];
+
     blockBucketsMeasured.forEach(blockBucket => {
         const rootEl = blockBucket.at(0)!.nearestBlockLevelParent as HTMLElement;
         const spans = blockBucket.map(nodeInfo => nodeInfo.spans).flat();
@@ -152,23 +154,19 @@ const splitLines = (blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] => {
         lines.push({ rootEl, isOneLiner, startSpan, endSpan });
         currentLine++;
     });
-    console.log(lines);
+
     lines.forEach(({ rootEl, isOneLiner, startSpan, endSpan }) => {
-        // console.log({ rootEl, isOneLiner, startSpan, endSpan })
         const lineSpan = document.createElement('span');
-        console.log('lineSpan', lineSpan);
         if (isOneLiner) {
-            console.log('one-liner');
             moveChildNodes(rootEl, lineSpan);
         } else {
-            console.log('multi-liner');
             moveChildNodes(deepCloneUntil(rootEl, endSpan)!, lineSpan);
         }
-
         lineSpan.dataset.line = '';
         lineSpan.style.setProperty('display', 'inline-block');
         rootEl.appendChild(lineSpan);
     });
+
     return blockBucketsMeasured;
 };
 

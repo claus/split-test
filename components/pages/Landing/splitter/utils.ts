@@ -60,12 +60,10 @@ export function moveChildNodes(from: Node, to: Node) {
 
 export function deepCloneUntil(node: Node, lastNode: Node, initialNode?: Node) {
     initialNode ??= node;
-    console.log('deepClone', node, node === lastNode, initialNode.contains(lastNode));
     if (!initialNode.contains(lastNode)) {
         return null;
     }
     if (node !== lastNode && node.contains(lastNode)) {
-        console.log('not clean node');
         const clonedNode = node.cloneNode(false);
         while (node.hasChildNodes()) {
             const firstChild = node.firstChild!;
@@ -73,7 +71,6 @@ export function deepCloneUntil(node: Node, lastNode: Node, initialNode?: Node) {
             if (deepClonedChild) {
                 clonedNode.appendChild(deepClonedChild);
                 if (firstChild === lastNode) {
-                    console.log('lastNode found');
                     break;
                 }
             } else {
@@ -82,7 +79,6 @@ export function deepCloneUntil(node: Node, lastNode: Node, initialNode?: Node) {
         }
         return clonedNode;
     } else {
-        console.log('clean node');
         return node;
     }
 }
