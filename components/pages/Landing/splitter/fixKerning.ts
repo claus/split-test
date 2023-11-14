@@ -1,21 +1,24 @@
 import { mappable } from '@madeinhaus/utils';
 import { createPath, toSelector } from './utils';
+import { NodeInfoSplit, Pair } from './types';
 
-interface Pair {
-    key: string;
-    elements: {
-        span: HTMLSpanElement;
-        path: HTMLElement[];
-        key: string;
-    }[];
-}
-
-export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
-    const spans = Array.from(elSplit.querySelectorAll<HTMLSpanElement>(`[data-typeinternal]`));
+export function fixKerning(
+    elSource: HTMLElement,
+    elSplit: HTMLElement,
+    blockBuckets: NodeInfoSplit[][]
+): void {
+    const spans = blockBuckets.reduce((acc, bucket) => {
+        bucket.forEach(({ spans, isWhitelisted }) => {
+            if (!isWhitelisted) {
+                spans.forEach(({ span }) => {
+                    acc.push(span);
+                });
+            }
+        });
+        return acc;
+    }, [] as HTMLSpanElement[]);
 
     const pairs: Pair[] = spans
-        // Only use spans that contain text (no wrapped images etc.)
-        .filter(span => span.dataset.typeinternal === 'char')
         // Get all bigrams
         .reduce((acc, span, i, a) => {
             if (i < a.length - 1) acc[i] = [span];
@@ -210,22 +213,33 @@ export function fixKerning(elSource: HTMLElement, elSplit: HTMLElement): void {
     });
 
     let charIndex = 0;
-    spans.forEach(span => {
-        const type = span.dataset.typeinternal;
-        const hasLetter = !span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
-        if (type === 'char') {
-            // Rename internal data type attribute to public facing one
-            // and set the value to 'whitespace' if it's a whitespace character
-            span.dataset.type = hasLetter ? type : 'whitespace';
-            delete span.dataset.typeinternal;
-        }
-        if (type !== 'char' || hasLetter) {
-            // The span contains either a whitelisted element or a letter:
-            // Add custom property with the index
-            span.style.setProperty('--index', charIndex.toString());
-            charIndex++;
-        }
-    });
+    blockBuckets
+        .reduce((acc, bucket) => {
+            bucket.forEach(({ spans }) => {
+                spans.forEach(({ span }) => {
+                    acc.push(span);
+                });
+            });
+            return acc;
+        }, [] as HTMLSpanElement[])
+        .forEach(span => {
+            const type = span.dataset.typeinternal;
+            const isChar = type === 'char';
+            const isWhitelisted = type === 'whitelisted';
+            const isSpace = isChar && span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
+            if (isChar || isWhitelisted) {
+                // Rename internal data type attribute to public facing one
+                // and set the value to 'whitespace' if it's a whitespace character
+                span.dataset.type = isSpace ? 'whitespace' : type;
+                delete span.dataset.typeinternal;
+            }
+            if ((isChar || isWhitelisted) && !isSpace) {
+                // The span contains either a whitelisted element or a letter:
+                // Add custom property with the index
+                span.style.setProperty('--index', charIndex.toString());
+                charIndex++;
+            }
+        });
 
     elSplit.style.setProperty('--total-chars', charIndex.toString());
 }

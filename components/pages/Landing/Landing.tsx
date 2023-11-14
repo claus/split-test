@@ -5,9 +5,15 @@ import Graphemer from 'graphemer';
 import { split } from './splitter';
 
 import Head from 'components/misc/Head';
+import CheckIcon from './svg/check';
+import HeartIcon from './svg/heart';
+import PersonIcon from './svg/person';
+import RocketIcon from './svg/rocket';
+import ThumbsUpIcon from './svg/thumbsup';
 
 import grid from 'styles/modules/grid.module.scss';
 import styles from './Landing.module.scss';
+import { Link } from '@madeinhaus/nextjs-page-transition';
 
 interface LandingProps {
     font: {
@@ -28,11 +34,11 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
             const splitter = new Graphemer();
             const elSplit = split(sourceRef.current, {
                 graphemeSplitter: string => splitter.splitGraphemes(string),
+                whitelistSelectors: ['img', 'svg', 'span.ignore'],
             });
             elSplit.classList.remove(styles.original);
             elSplit.classList.add(styles.split);
             splitRef.current.parentElement?.replaceChild(elSplit, splitRef.current);
-            // setDebugTime(`Split: ${timeSplit.toFixed(4)}ms, Kern: ${timeKern.toFixed(4)}ms`);
         }
     }, [fontLoaded]);
 
@@ -52,11 +58,11 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
             <section className={styles.section}>
                 <h3 style={{ marginBottom: '1em' }}>{debugTime}</h3>
                 <div className={styles.test}>
-                    <div
+                    {/* <div
                         ref={sourceRef}
                         className={styles.original}
                         dangerouslySetInnerHTML={{
-                            __html: 'AVAV <b><img class="abc" src=""></b>  <i>  A 👩‍👩‍👧‍👧 B <b>  hello</b> \u006E\u0303 <a href="https://madeinhaus.com">AVAVAV</a> </i>   avav  <span class="ignore"> away   </span>  ',
+                            // __html: 'AVAV <b><img class="abc" src=""></b>  <i>  A 👩‍👩‍👧‍👧 B <b>  hello</b> \u006E\u0303 <a href="https://madeinhaus.com">AVAVAV</a> </i>   avav  <span class="ignore"> away   </span>  ',
                             // __html: 'AVAV <b><img class="abc" src=""></b>  <i>  A 👩‍👩‍👧‍👧 B <b>  hello</b></i>',
                             // __html: '<b>abc</b> <div>AVAVA</div> hello',
                             // __html: 'X <![CDATA[ xxx ]]> <!-- --> <b><img class="abc" src=""></b>  <i>   A 👩‍👩‍👧‍👧   <b>   B  </b> \u006E\u0303 <a href="https://madeinhaus.com">AVAVAV</a> </i> ',
@@ -70,6 +76,7 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                             // __html: 'A<div>V <a href="https://madeinhaus.com">AVAV</a></div>AV <i>AYAYAVAVAVAVAV AVAVAVAVAV</i> AVAVAVA',
                             // __html: 'AVATPAY dsdsadas dasdasdsa das das dasdas',
                             // __html: 'Tr<b>a</b>nsfor<i>m</i> avav br<b>a</b>nd',
+                            __html: 'It even supports <img src="/images/check.svg" width="24" height="24"> SVG and images if you need them, how cool is that?',
                             //                             __html: `
                             // <div>
                             //     <h1>Headline</h1>
@@ -90,7 +97,13 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                             //     </ul>
                             // </div>`,
                         }}
-                    />
+                    /> */}
+                    <div ref={sourceRef} className={styles.original}>
+                        It even <ThumbsUpIcon /> supports SVGs <CheckIcon />,
+                        images <img src="/images/accordion.gif" width="220" height="220" alt="" /> and{' '}
+                        <Link href="/">links</Link> <HeartIcon /> should you <PersonIcon /> ever need them,
+                        how cool is that? <RocketIcon />
+                    </div>
                     <div ref={splitRef} className={styles.split} />
                 </div>
             </section>

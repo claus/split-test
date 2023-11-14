@@ -1,47 +1,10 @@
 import { fixKerning } from './fixKerning';
+import { NodeInfo, NodeInfoSplit, SplitOptions } from './types';
 import { deepCloneUntil, moveChildNodes } from './utils';
 
-export interface SplitOptions {
-    /* */
-    dataTypeName?: string;
-    /* */
-    dataTypeWhitespace?: string;
-    /* The custom property added to span wrappers to get the index. Default: "--index"  */
-    indexCustomProp?: string;
-    totalCustomProp?: string;
-    /* Whitelist of selectors to wrap in spans. Default: ["img", "svg"] */
-    whitelistSelectors?: string[];
-    /* Whether to adjust kerning. Default: true */
-    adjustKerning?: boolean;
-    /* Function to split a string into characters/graphemes. Default: string => [...string.normalize('NFC')] */
-    graphemeSplitter?: (str: string) => string[];
-}
-
-interface NodeInfo {
-    node: Node;
-    nearestBlockLevelParent: Node;
-    isBlockLevel?: boolean;
-    text?: string;
-}
-
-interface NodeInfoSplit extends NodeInfo {
-    spans: {
-        span: HTMLSpanElement;
-        rect?: DOMRect;
-        line?: number;
-    }[];
-}
-
 export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLElement {
-    const {
-        dataTypeName = 'type',
-        dataTypeWhitespace = 'whitespace',
-        indexCustomProp = '--index',
-        totalCustomProp = '--total',
-        whitelistSelectors = ['img', 'svg', 'span.ignore'],
-        adjustKerning = true,
-        graphemeSplitter = string => [...string.normalize('NFC')],
-    } = options;
+    let t = performance.now();
+
     // Work on a clone of the source element
     const elSplit = elSource.cloneNode(true) as HTMLElement;
 
@@ -49,18 +12,23 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     elSource.parentNode?.replaceChild(elSplit, elSource);
 
     // Do the splitting
-    const blockBuckets = splitChars(elSplit, graphemeSplitter);
+    const blockBuckets = splitChars(elSplit, options);
+    console.log('splitChars', performance.now() - t);
+    t = performance.now();
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     // Fix the kerning
-    fixKerning(elSource, elSplit);
+    fixKerning(elSource, elSplit, blockBuckets);
+    console.log('fixKerning', performance.now() - t);
+    t = performance.now();
 
     // Swap split element into the DOM
     elSource.parentNode?.replaceChild(elSplit, elSource);
 
     splitLines(blockBuckets);
+    console.log('splitLines', performance.now() - t);
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
@@ -68,13 +36,21 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     return elSplit;
 }
 
-const splitChars = (node: Node, splitter: (str: string) => string[]): NodeInfoSplit[][] => {
-    const t = performance.now();
-    const iterator = walk(node, (node: Node) => node.nodeType === Node.TEXT_NODE);
+const splitChars = (node: Node, options: SplitOptions): NodeInfoSplit[][] => {
+    const {
+        graphemeSplitter = string => [...string.normalize('NFC')],
+        whitelistSelectors = ['img', 'svg'],
+    } = options;
+    const iterator = walk(
+        node,
+        (node: Node) =>
+            node.nodeType === Node.TEXT_NODE ||
+            (node as HTMLElement).matches(whitelistSelectors.join(','))
+    );
     return (
         [...iterator]
             // Filter out empty text nodes
-            .filter(({ text }) => (text?.length ?? 0) > 0)
+            .filter(({ text, isWhitelisted }) => (text?.length ?? 0) > 0 || isWhitelisted)
             // Sibling textElements with the same nearestBlockLevelParent
             // are grouped together into buckets.
             .reduce((acc, textElement) => {
@@ -90,19 +66,27 @@ const splitChars = (node: Node, splitter: (str: string) => string[]): NodeInfoSp
                 }
                 return acc;
             }, [] as NodeInfo[][])
-            // Wrap graphemes in spans
+            // Wrap graphemes and whitelisted elements in spans
             .map(blockBucket =>
                 blockBucket.map(nodeInfo => {
-                    const fragment = document.createDocumentFragment();
-                    const spans = splitter(nodeInfo.text!).map(char => {
+                    if (nodeInfo.isWhitelisted) {
                         const span = document.createElement('span') as HTMLSpanElement;
-                        span.dataset.typeinternal = 'char';
-                        span.textContent = char;
-                        fragment.appendChild(span);
-                        return { span };
-                    });
-                    nodeInfo.node.parentNode?.replaceChild(fragment, nodeInfo.node);
-                    return { ...nodeInfo, spans };
+                        span.dataset.typeinternal = 'whitelisted';
+                        nodeInfo.node.parentNode?.replaceChild(span, nodeInfo.node);
+                        span.appendChild(nodeInfo.node);
+                        return { ...nodeInfo, spans: [{ span }] };
+                    } else {
+                        const fragment = document.createDocumentFragment();
+                        const spans = graphemeSplitter(nodeInfo.text!).map(char => {
+                            const span = document.createElement('span') as HTMLSpanElement;
+                            span.dataset.typeinternal = 'char';
+                            span.textContent = char;
+                            fragment.appendChild(span);
+                            return { span };
+                        });
+                        nodeInfo.node.parentNode?.replaceChild(fragment, nodeInfo.node);
+                        return { ...nodeInfo, spans };
+                    }
                 })
             )
     );
@@ -155,14 +139,14 @@ const splitLines = (blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] => {
         currentLine++;
     });
 
-    lines.forEach(({ rootEl, isOneLiner, startSpan, endSpan }) => {
+    lines.forEach(({ rootEl, isOneLiner, endSpan }) => {
         const lineSpan = document.createElement('span');
         if (isOneLiner) {
             moveChildNodes(rootEl, lineSpan);
         } else {
             moveChildNodes(deepCloneUntil(rootEl, endSpan)!, lineSpan);
         }
-        lineSpan.dataset.line = '';
+        lineSpan.dataset.type = 'line';
         lineSpan.style.setProperty('display', 'inline-block');
         rootEl.appendChild(lineSpan);
     });
@@ -184,7 +168,7 @@ function* walk(
                     // It's safe to get innerText directly from the parent
                     yield {
                         node,
-                        isBlockLevel: false,
+                        isWhitelisted: false,
                         nearestBlockLevelParent,
                         text: (node.parentNode as HTMLElement).innerText,
                     };
@@ -200,7 +184,7 @@ function* walk(
                     spanTmp.parentNode!.replaceChild(node, spanTmp);
                     yield {
                         node,
-                        isBlockLevel: false,
+                        isWhitelisted: false,
                         nearestBlockLevelParent,
                         text,
                     };
@@ -227,7 +211,7 @@ function* walk(
                 nearestBlockLevelParent = node;
             }
             if (matcher(node)) {
-                yield { node, isBlockLevel, nearestBlockLevelParent };
+                yield { node, isWhitelisted: true, nearestBlockLevelParent };
             }
             // Recurse
             var children = node.childNodes;

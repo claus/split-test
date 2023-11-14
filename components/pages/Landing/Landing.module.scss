@@ -43,18 +43,20 @@
     img,
     svg {
         display: inline;
+        position: relative;
+        top: 0.075em;
+        width: 0.85em;
+        height: 0.85em;
+        vertical-align: top;
+        color: currentcolor;
     }
 
     i {
         font-style: normal;
     }
 
-    a {
-        font-size: 1.3em;
-    }
-
     @include medium {
-        font-size: 120px;
+        font-size: 100px;
     }
 }
 
