@@ -99,10 +99,15 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                         }}
                     /> */}
                     <div ref={sourceRef} className={styles.original}>
-                        It even <ThumbsUpIcon /> supports SVGs <CheckIcon />,
-                        images <img src="/images/accordion.gif" width="220" height="220" alt="" /> and{' '}
-                        <Link href="/">links</Link> <HeartIcon /> should you <PersonIcon /> ever need them,
-                        how cool is that? <RocketIcon />
+                        <div>
+                            Romper <ThumbsUpIcon /> supports <CheckIcon /> SVGs, images{' '}
+                            <img src="/images/accordion.gif" width="220" height="220" alt="" /> and{' '}
+                            <Link href="/">links</Link>, should <PersonIcon /> you ever{' '}
+                            <HeartIcon /> need them.
+                        </div>
+                        <div style={{ marginTop: '0.4em' }}>
+                            How cool <RocketIcon /> is that?
+                        </div>
                     </div>
                     <div ref={splitRef} className={styles.split} />
                 </div>
