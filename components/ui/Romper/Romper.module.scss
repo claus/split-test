@@ -1,0 +1,14 @@
+@import 'styles/breakpoints';
+@import 'styles/fonts';
+
+.root {
+    [data-type='char'],
+    [data-type='whitelisted'] {
+        display: inline-block;
+    }
+
+    [data-type='line'] {
+        display: block;
+        width: fit-content;
+    }
+}

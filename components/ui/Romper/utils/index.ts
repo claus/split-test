@@ -1,7 +1,6 @@
-import { cleanUp } from '@/components/ui/Romper/utils';
 import { fixKerning } from './fixKerning';
 import { NodeInfo, NodeInfoSplit, SplitOptions } from './types';
-import { deepCloneUntil, moveChildNodes } from './utils';
+import { deepCloneUntil, moveChildNodes } from './dom';
 
 export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLElement {
     let t = performance.now();
@@ -155,6 +154,39 @@ export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
 
     return blockBucketsMeasured;
 };
+
+export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
+    let charIndex = 0;
+    blockBuckets
+        .reduce((acc, bucket) => {
+            bucket.forEach(({ spans }) => {
+                spans.forEach(({ span }) => {
+                    acc.push(span);
+                });
+            });
+            return acc;
+        }, [] as HTMLSpanElement[])
+        .forEach(span => {
+            const type = span.dataset.typeinternal;
+            const isChar = type === 'char';
+            const isWhitelisted = type === 'whitelisted';
+            const isSpace = isChar && span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
+            if (isChar || isWhitelisted) {
+                // Rename internal data type attribute to public facing one
+                // and set the value to 'whitespace' if it's a whitespace character
+                span.dataset.type = isSpace ? 'whitespace' : type;
+                delete span.dataset.typeinternal;
+            }
+            if ((isChar || isWhitelisted) && !isSpace) {
+                // The span contains either a whitelisted element or a letter:
+                // Add custom property with the index
+                span.style.setProperty('--index', charIndex.toString());
+                charIndex++;
+            }
+        });
+
+    elSplit.style.setProperty('--total-chars', charIndex.toString());
+}
 
 function* walk(
     node: Node,
