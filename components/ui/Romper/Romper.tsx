@@ -1,11 +1,12 @@
 import * as React from 'react';
 import cx from 'clsx';
 
-import { cleanUp, split } from './utils';
+import { cleanUp } from './utils';
 
 import styles from './Romper.module.scss';
-import { splitChars, splitLines } from '@/components/pages/Landing/splitter';
+import { splitChars, splitLines } from './utils';
 import { fixKerning } from './utils/fixKerning';
+import { moveChildNodes } from './utils/dom';
 
 interface RomperProps {
     as?: React.ElementType<any>;
@@ -24,19 +25,52 @@ const Romper: React.FC<RomperProps> = props => {
         children,
     } = props;
 
+    const elSourceRef = React.useRef<HTMLElement>();
+    const elSourceCloneRef = React.useRef<HTMLElement>();
+    const resizeObserverRef = React.useRef<ResizeObserver>();
     const wrapperRef = React.useCallback(
-        (el: HTMLElement) => {
-            if (el) {
+        (elSource: HTMLElement) => {
+            if (elSource) {
                 if (enabled) {
-                    const t = performance.now();
-                    const elSplit = el.cloneNode(true) as HTMLElement;
+                    console.time('split');
+
+                    const elSplit = elSource.cloneNode(true) as HTMLElement;
+                    elSourceCloneRef.current = elSource.cloneNode(true) as HTMLElement;
+                    elSourceRef.current = elSource;
+                    elSource.parentNode?.replaceChild(elSplit, elSource);
                     const blockBuckets = splitChars(elSplit, { graphemeSplitter });
-                    fixKerning(el, elSplit, blockBuckets);
-                    const elTmp = elSplit.cloneNode(true) as HTMLElement;
+                    fixKerning(elSource, elSplit, blockBuckets);
                     splitLines(blockBuckets);
-                    cleanUp(el, blockBuckets);
-                    console.log(performance.now() - t);
+                    cleanUp(elSplit, blockBuckets);
+                    elSplit.parentNode?.replaceChild(elSource, elSplit);
+                    elSource.innerHTML = '';
+                    moveChildNodes(elSplit, elSource);
+                    elSource.dataset.type = elSplit.dataset.type;
+                    elSource.setAttribute('style', elSplit.getAttribute('style')!);
+
+                    console.timeEnd('split');
+
+                    resizeObserverRef.current = new ResizeObserver(([entry]) => {
+                        // TO-TF-DO
+                        // console.log(entry);
+                        // splitLines(blockBuckets);
+                        // cleanUp(elSplit, blockBuckets);
+                    });
+                    resizeObserverRef.current.observe(elSource);
+                    return;
                 }
+            }
+            if (resizeObserverRef.current) {
+                resizeObserverRef.current.disconnect();
+                resizeObserverRef.current = undefined;
+            }
+            if (elSourceRef.current && elSourceCloneRef.current) {
+                elSourceRef.current.innerHTML = '';
+                moveChildNodes(elSourceCloneRef.current, elSourceRef.current);
+                delete elSourceRef.current.dataset.type;
+                elSourceRef.current.removeAttribute('style');
+                elSourceRef.current = undefined;
+                elSourceCloneRef.current = undefined;
             }
         },
         [enabled, graphemeSplitter]

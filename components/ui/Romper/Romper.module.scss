@@ -2,9 +2,31 @@
 @import 'styles/fonts';
 
 .root {
+    &[data-type='romper'] {
+        color: green;
+        font-feature-settings: 'kern' off;
+    }
+
+    [data-type='kern'],
+    [data-type='nokern'] {
+        all: unset;
+        position: absolute;
+    }
+
+    [data-type='kern'] {
+        font-kerning: normal;
+        font-feature-settings: "kern" on;
+    }
+
+    [data-type='nokern'] {
+        font-kerning: none;
+        font-feature-settings: "kern" off;
+    }
+
     [data-type='char'],
     [data-type='whitelisted'] {
         display: inline-block;
+        text-decoration: inherit;
     }
 
     [data-type='line'] {

@@ -22,6 +22,11 @@ interface LandingProps {
 
 const Landing: React.FC<LandingProps> = ({ font }) => {
     const [fontLoaded, setFontLoaded] = React.useState(false);
+    const [enabled, setEnabled] = React.useState(true);
+
+    const toggle = React.useCallback(() => {
+        setEnabled(!enabled);
+    }, [enabled]);
 
     React.useEffect(() => {
         const WebFont = require('webfontloader');
@@ -37,8 +42,12 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
         <div className={cx(styles.root, grid.container)}>
             <Head title="Split Text" description="Split Text Experiments" />
             <section className={styles.section}>
+                <button className={styles.toggle} onClick={toggle}>
+                    Toggle Romper
+                </button>
+                {enabled ? " (it's ON)" : " (it's OFF)"}
                 <div className={styles.test}>
-                    <Romper enabled={fontLoaded} className={styles.original}>
+                    <Romper enabled={fontLoaded && enabled} className={styles.original}>
                         <div>
                             Romper <ThumbsUpIcon /> supports <CheckIcon /> SVGs, images{' '}
                             <img src="/images/accordion.gif" width="220" height="220" alt="" /> and{' '}

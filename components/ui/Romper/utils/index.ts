@@ -2,8 +2,10 @@ import { fixKerning } from './fixKerning';
 import { NodeInfo, NodeInfoSplit, SplitOptions } from './types';
 import { deepCloneUntil, moveChildNodes } from './dom';
 
+const BLOCK_LEVEL_DISPLAY_VALUES = ['block', 'flex', 'grid', 'table', 'list-item', 'flow-root'];
+
 export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLElement {
-    let t = performance.now();
+    console.time('Romper:split');
 
     // Work on a clone of the source element
     const elSplit = elSource.cloneNode(true) as HTMLElement;
@@ -13,32 +15,30 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
 
     // Do the splitting
     const blockBuckets = splitChars(elSplit, options);
-    console.log('splitChars', performance.now() - t);
-    t = performance.now();
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     // Fix the kerning
     fixKerning(elSource, elSplit, blockBuckets);
-    console.log('fixKerning', performance.now() - t);
-    t = performance.now();
 
     // Swap split element into the DOM
     elSource.parentNode?.replaceChild(elSplit, elSource);
 
     splitLines(blockBuckets);
-    console.log('splitLines', performance.now() - t);
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     cleanUp(elSource, blockBuckets);
 
+    console.timeEnd('Romper:split');
+
     return elSplit;
 }
 
 export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][] {
+    console.time('splitChars');
     const {
         graphemeSplitter = string => [...string.normalize('NFC')],
         whitelistSelectors = ['img', 'svg'],
@@ -47,54 +47,58 @@ export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][]
         node,
         (node: Node) =>
             node.nodeType === Node.TEXT_NODE ||
-            (node as HTMLElement).matches(whitelistSelectors.join(','))
+            // (node as HTMLElement).matches(whitelistSelectors.join(','))
+            whitelistSelectors.includes(node.nodeName.toLowerCase())
     );
-    return (
-        [...iterator]
-            // Filter out empty text nodes
-            .filter(({ text, isWhitelisted }) => (text?.length ?? 0) > 0 || isWhitelisted)
-            // Sibling textElements with the same nearestBlockLevelParent
-            // are grouped together into buckets.
-            .reduce((acc, textElement) => {
-                const needsNewBucket =
-                    acc.length === 0 ||
-                    (acc.at(-1)!.length > 0 &&
-                        acc.at(-1)!.at(0)!.nearestBlockLevelParent !==
-                            textElement.nearestBlockLevelParent);
-                if (needsNewBucket) {
-                    acc.push([textElement]);
+    const nodeInfoSplit = [...iterator]
+        // Filter out empty text nodes
+        .filter(({ text, isWhitelisted }) => (text?.length ?? 0) > 0 || isWhitelisted)
+        // Sibling textElements with the same nearestBlockLevelParent
+        // are grouped together into buckets.
+        .reduce((acc, textElement) => {
+            const needsNewBucket =
+                acc.length === 0 ||
+                (acc.at(-1)!.length > 0 &&
+                    acc.at(-1)!.at(0)!.nearestBlockLevelParent !==
+                        textElement.nearestBlockLevelParent);
+            if (needsNewBucket) {
+                acc.push([textElement]);
+            } else {
+                acc.at(-1)!.push(textElement);
+            }
+            return acc;
+        }, [] as NodeInfo[][])
+        // Wrap graphemes and whitelisted elements in spans
+        .map(blockBucket =>
+            blockBucket.map(nodeInfo => {
+                if (nodeInfo.isWhitelisted) {
+                    const span = document.createElement('span') as HTMLSpanElement;
+                    span.dataset.typeinternal = 'whitelisted';
+                    nodeInfo.node.parentNode?.replaceChild(span, nodeInfo.node);
+                    span.appendChild(nodeInfo.node);
+                    return { ...nodeInfo, spans: [{ span }] };
                 } else {
-                    acc.at(-1)!.push(textElement);
-                }
-                return acc;
-            }, [] as NodeInfo[][])
-            // Wrap graphemes and whitelisted elements in spans
-            .map(blockBucket =>
-                blockBucket.map(nodeInfo => {
-                    if (nodeInfo.isWhitelisted) {
+                    const fragment = document.createDocumentFragment();
+                    const spans = graphemeSplitter(nodeInfo.text!).map(char => {
                         const span = document.createElement('span') as HTMLSpanElement;
-                        span.dataset.typeinternal = 'whitelisted';
-                        nodeInfo.node.parentNode?.replaceChild(span, nodeInfo.node);
-                        span.appendChild(nodeInfo.node);
-                        return { ...nodeInfo, spans: [{ span }] };
-                    } else {
-                        const fragment = document.createDocumentFragment();
-                        const spans = graphemeSplitter(nodeInfo.text!).map(char => {
-                            const span = document.createElement('span') as HTMLSpanElement;
-                            span.dataset.typeinternal = 'char';
-                            span.textContent = char;
-                            fragment.appendChild(span);
-                            return { span };
-                        });
-                        nodeInfo.node.parentNode?.replaceChild(fragment, nodeInfo.node);
-                        return { ...nodeInfo, spans };
-                    }
-                })
-            )
-    );
-};
+                        span.dataset.typeinternal = 'char';
+                        span.textContent = char;
+                        fragment.appendChild(span);
+                        return { span };
+                    });
+                    nodeInfo.node.parentNode?.replaceChild(fragment, nodeInfo.node);
+                    return { ...nodeInfo, spans };
+                }
+            })
+        );
+
+    console.timeEnd('splitChars');
+
+    return nodeInfoSplit;
+}
 
 export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
+    console.time('splitLines');
     let line = 0;
     const blockBucketsMeasured = blockBuckets.map(blockBucket => {
         let lastXPos: number;
@@ -152,10 +156,13 @@ export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
         rootEl.appendChild(lineSpan);
     });
 
+    console.timeEnd('splitLines');
+
     return blockBucketsMeasured;
-};
+}
 
 export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
+    console.time('cleanUp');
     let charIndex = 0;
     blockBuckets
         .reduce((acc, bucket) => {
@@ -185,7 +192,9 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
             }
         });
 
+    elSplit.dataset.type = 'romper';
     elSplit.style.setProperty('--total-chars', charIndex.toString());
+    console.timeEnd('cleanUp');
 }
 
 function* walk(
@@ -197,32 +206,12 @@ function* walk(
         case Node.TEXT_NODE: {
             if (matcher(node) && node.parentNode) {
                 // This is a matching text node:
-                if (node.parentNode.childNodes.length === 1) {
-                    // This is the only child of its parent
-                    // It's safe to get innerText directly from the parent
-                    yield {
-                        node,
-                        isWhitelisted: false,
-                        nearestBlockLevelParent,
-                        text: (node.parentNode as HTMLElement).innerText,
-                    };
-                } else {
-                    // Wrap nodeValue in a temporary span
-                    // This will get us the innerText
-                    const spanTmp = document.createElement('span');
-                    spanTmp.textContent = node.textContent;
-                    spanTmp.style.setProperty('all', 'unset');
-                    node.parentNode.replaceChild(spanTmp, node);
-                    const text = spanTmp.innerText;
-                    // Swap the original node back in
-                    spanTmp.parentNode!.replaceChild(node, spanTmp);
-                    yield {
-                        node,
-                        isWhitelisted: false,
-                        nearestBlockLevelParent,
-                        text,
-                    };
-                }
+                yield {
+                    node,
+                    isWhitelisted: false,
+                    nearestBlockLevelParent,
+                    text: node.textContent ?? '',
+                };
             }
             break;
         }
@@ -232,16 +221,7 @@ function* walk(
             const display = window
                 .getComputedStyle(node as HTMLElement)
                 .getPropertyValue('display');
-            const blockLevelDisplayValues = [
-                'block',
-                'flex',
-                'grid',
-                'table',
-                'list-item',
-                'flow-root',
-            ];
-            const isBlockLevel = blockLevelDisplayValues.includes(display);
-            if (isBlockLevel) {
+            if (BLOCK_LEVEL_DISPLAY_VALUES.includes(display)) {
                 nearestBlockLevelParent = node;
             }
             if (matcher(node)) {

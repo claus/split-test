@@ -7,6 +7,13 @@ export function fixKerning(
     elSplit: HTMLElement,
     blockBuckets: NodeInfoSplit[][]
 ): void {
+    console.time('fixKerning');
+    const activeElement = elSource.parentNode ? 'source' : 'split';
+    if (activeElement === 'split') {
+        // Swap split element into the DOM
+        elSplit.parentNode?.replaceChild(elSource, elSplit);
+    }
+
     const spans = blockBuckets.reduce((acc, bucket) => {
         bucket.forEach(({ spans, isWhitelisted }) => {
             if (!isWhitelisted) {
@@ -88,6 +95,7 @@ export function fixKerning(
     // in a div for measuring the "kerning" (the difference in width
     // between one of the clones rendered with `kerning: normal` and
     // the other with `kerning: none`.
+    console.time('measureElements');
     const measureElements: MeasureElement[] = uniquePairs.map(({ key, elements }) => {
         const { span: a, path: aPath } = elements[0];
         const { span: b, path: bPath } = elements[1];
@@ -148,66 +156,61 @@ export function fixKerning(
             wrapper: measureEl,
         };
     });
+    const measureElementMap = new Map<string, MeasureElement>(
+        measureElements.map(measureElement => [measureElement.key, measureElement])
+    );
+    console.timeEnd('measureElements');
 
-    // Create a div and add all measureElement wrappers to it
-    const measureDivKern = document.createElement('div');
-    const measureDivNoKern = document.createElement('div');
+    console.time('cloneMeasure');
+    const measureDiv = document.createElement('div');
     measureElements.forEach(({ wrapper }) => {
-        measureDivKern.appendChild(wrapper).cloneNode(true);
-        measureDivNoKern.appendChild(wrapper.cloneNode(true));
+        measureDiv.appendChild(wrapper);
     });
+    console.timeEnd('cloneMeasure');
 
-    const setMeasureDivStyles = (element: HTMLElement, kern: boolean) => {
-        const styles = [
-            { property: 'all', value: 'unset' },
-            { property: 'position', value: 'absolute' },
-            { property: 'font-kerning', value: kern ? 'normal' : 'none' },
-            { property: 'font-feature-settings', value: `"kern" ${kern ? 'on' : 'off'}` },
-        ];
-        styles.forEach(({ property, value }) => element.style.setProperty(property, value));
-    };
-
-    measureDivKern.dataset.type = 'kern';
-    setMeasureDivStyles(measureDivKern, true);
-    elSplit.insertBefore(measureDivKern, elSplit.firstChild);
-
-    measureDivNoKern.dataset.type = 'nokern';
-    setMeasureDivStyles(measureDivNoKern, false);
-    elSplit.insertBefore(measureDivNoKern, elSplit.firstChild);
-
-    // Swap split element into the DOM
+    console.time('measureKernings');
+    measureDiv.dataset.type = 'kern';
+    elSplit.insertBefore(measureDiv, elSplit.firstChild);
     elSource.parentNode?.replaceChild(elSplit, elSource);
-
-    // Measure kerning values
-    const kerningValues = mappable(measureElements.length).map(i => {
-        const measureElKern = measureDivKern.childNodes[i] as HTMLElement;
-        const measureElNoKern = measureDivNoKern.childNodes[i] as HTMLElement;
-        const kernWidth = measureElKern.getBoundingClientRect().width;
-        const noKernWidth = measureElNoKern.getBoundingClientRect().width;
-        let tmp = measureElKern;
+    const kerningData = measureElements.map(({ wrapper }) => {
+        const kernWidth = wrapper.getBoundingClientRect().width;
+        let tmp = wrapper;
         while (tmp.firstChild?.nodeType === Node.ELEMENT_NODE) {
             tmp = tmp.firstChild as HTMLElement;
         }
         const fontSize = parseFloat(window.getComputedStyle(tmp).getPropertyValue('font-size'));
-        return (kernWidth - noKernWidth) / fontSize;
+        return { kernWidth, fontSize };
     });
 
-    // Swap original element back into the DOM
+    const keyToKerningValueMap = new Map<string, number>();
+    measureDiv.dataset.type = 'nokern';
+    measureElements.forEach(({ key, wrapper }, i) => {
+        const { kernWidth, fontSize } = kerningData[i];
+        const noKernWidth = wrapper.getBoundingClientRect().width;
+        const kerningValue = (kernWidth - noKernWidth) / fontSize;
+        keyToKerningValueMap.set(key, kerningValue);
+    });
+    console.timeEnd('measureKernings');
+
+    // Swap original element into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
-    elSplit.removeChild(measureDivKern);
-    elSplit.removeChild(measureDivNoKern);
+    // Clean up
+    elSplit.removeChild(measureDiv);
 
     // Apply kerning values
     pairs.forEach(({ key, elements }) => {
         const { span } = elements[0];
-        const index = measureElements.findIndex(({ key: k }) => k === key);
-        if (index !== -1) {
-            if (kerningValues[index]) {
-                span.style.setProperty('margin-right', `${kerningValues[index]}em`);
-            }
-        } else {
-            console.log(`Kerning pair not found: {${key}}`);
+        const kerningValue = keyToKerningValueMap.get(key);
+        if (kerningValue) {
+            span.style.setProperty('margin-right', `${kerningValue}em`);
         }
     });
+
+    if (activeElement === 'split') {
+        // Swap split element into the DOM
+        elSource.parentNode?.replaceChild(elSplit, elSource);
+    }
+
+    console.timeEnd('fixKerning');
 }
