@@ -178,6 +178,7 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
     console.time('cleanUp');
 
     let charIndex = 0;
+    let lineIndex = 0;
     blockBuckets
         .reduce((acc, bucket) => {
             bucket.forEach(({ spans }) => {
@@ -201,14 +202,20 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
                 if (!isSpace) {
                     // The span contains either a whitelisted element or a letter:
                     // Index this span.
-                    span.style.setProperty('--index', charIndex.toString());
+                    span.style.setProperty('--char-index', charIndex.toString());
                     charIndex++;
                 }
             }
         });
 
+    elSplit.querySelectorAll('[data-type="line"]').forEach((line) => {
+        (line as HTMLElement).style.setProperty('--line-index', lineIndex.toString());
+        lineIndex++;
+    });
+
     elSplit.dataset.type = 'romper';
     elSplit.style.setProperty('--total-chars', charIndex.toString());
+    elSplit.style.setProperty('--total-lines', lineIndex.toString());
 
     console.timeEnd('cleanUp');
 }
