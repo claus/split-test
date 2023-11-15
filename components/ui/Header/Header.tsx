@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         <div className={cx(styles.root, className)}>
             <div className={cx(styles.container, grid.container)}>
                 <h1 className={cx(styles.home, 'body')}>
-                    <Link href="/">HAUS Next.JS TS Starter</Link>
+                    <Link href="/">Romper</Link>
                 </h1>
                 <ul data-title="Theme:" className={cx(styles.themeToggle, 'body')}>
                     {['auto', 'light', 'dark'].map(themeValue => (
