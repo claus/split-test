@@ -6,7 +6,6 @@ export default function Document() {
         <Html lang="en">
             <Head>
                 <ThemeScript />
-                <link href="https://use.typekit.net/xyb1gmk.css" rel="stylesheet" />
             </Head>
             <body>
                 <Main />
