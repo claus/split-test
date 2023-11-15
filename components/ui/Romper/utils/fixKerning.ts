@@ -169,6 +169,7 @@ export function fixKerning(
     console.timeEnd('cloneMeasure');
 
     console.time('measureKernings');
+    console.time('kern');
     measureDiv.dataset.type = 'kern';
     elSplit.insertBefore(measureDiv, elSplit.firstChild);
     elSource.parentNode?.replaceChild(elSplit, elSource);
@@ -181,7 +182,9 @@ export function fixKerning(
         const fontSize = parseFloat(window.getComputedStyle(tmp).getPropertyValue('font-size'));
         return { kernWidth, fontSize };
     });
+    console.timeEnd('kern');
 
+    console.time('nokern');
     const keyToKerningValueMap = new Map<string, number>();
     measureDiv.dataset.type = 'nokern';
     measureElements.forEach(({ key, wrapper }, i) => {
@@ -190,6 +193,7 @@ export function fixKerning(
         const kerningValue = (kernWidth - noKernWidth) / fontSize;
         keyToKerningValueMap.set(key, kerningValue);
     });
+    console.timeEnd('nokern');
     console.timeEnd('measureKernings');
 
     // Swap original element into the DOM

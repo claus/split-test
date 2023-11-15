@@ -5,7 +5,7 @@ import { deepCloneUntil, moveChildNodes } from './dom';
 const BLOCK_LEVEL_DISPLAY_VALUES = ['block', 'flex', 'grid', 'table', 'list-item', 'flow-root'];
 
 export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLElement {
-    console.time('Romper:split');
+    console.time('split');
 
     // Work on a clone of the source element
     const elSplit = elSource.cloneNode(true) as HTMLElement;
@@ -25,14 +25,14 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     // Swap split element into the DOM
     elSource.parentNode?.replaceChild(elSplit, elSource);
 
-    splitLines(blockBuckets);
+    splitLines(elSource, elSplit, blockBuckets);
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     cleanUp(elSource, blockBuckets);
 
-    console.timeEnd('Romper:split');
+    console.timeEnd('split');
 
     return elSplit;
 }
@@ -97,8 +97,18 @@ export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][]
     return nodeInfoSplit;
 }
 
-export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
+export function splitLines(
+    elSource: HTMLElement,
+    elSplit: HTMLElement,
+    blockBuckets: NodeInfoSplit[][]
+): NodeInfoSplit[][] {
     console.time('splitLines');
+
+    if (!elSplit.parentNode) {
+        // Swap split element into the DOM
+        elSource.parentNode?.replaceChild(elSplit, elSource);
+    }
+
     let line = 0;
     const blockBucketsMeasured = blockBuckets.map(blockBucket => {
         let lastXPos: number;
@@ -116,6 +126,9 @@ export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
         line++;
         return blockBucketMeasured;
     });
+
+    // Swap source element into the DOM
+    elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     let currentLine = 0;
 
@@ -163,6 +176,7 @@ export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
 
 export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
     console.time('cleanUp');
+
     let charIndex = 0;
     blockBuckets
         .reduce((acc, bucket) => {
@@ -183,17 +197,19 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
                 // and set the value to 'whitespace' if it's a whitespace character
                 span.dataset.type = isSpace ? 'whitespace' : type;
                 delete span.dataset.typeinternal;
-            }
-            if ((isChar || isWhitelisted) && !isSpace) {
-                // The span contains either a whitelisted element or a letter:
-                // Add custom property with the index
-                span.style.setProperty('--index', charIndex.toString());
-                charIndex++;
+
+                if (!isSpace) {
+                    // The span contains either a whitelisted element or a letter:
+                    // Index this span.
+                    span.style.setProperty('--index', charIndex.toString());
+                    charIndex++;
+                }
             }
         });
 
     elSplit.dataset.type = 'romper';
     elSplit.style.setProperty('--total-chars', charIndex.toString());
+
     console.timeEnd('cleanUp');
 }
 

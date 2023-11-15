@@ -11,6 +11,7 @@ import { moveChildNodes } from './utils/dom';
 interface RomperProps {
     as?: React.ElementType<any>;
     enabled?: boolean;
+    doubleWrap?: boolean;
     graphemeSplitter?: (str: string) => string[];
     className?: string;
     children: React.ReactNode;
@@ -20,6 +21,7 @@ const Romper: React.FC<RomperProps> = props => {
     const {
         as: Wrapper = 'div',
         enabled = false,
+        doubleWrap = false,
         graphemeSplitter = str => [...str.normalize('NFC')],
         className,
         children,
@@ -34,15 +36,26 @@ const Romper: React.FC<RomperProps> = props => {
                 if (enabled) {
                     console.time('split');
 
+                    // Work on a clone of the source element
                     const elSplit = elSource.cloneNode(true) as HTMLElement;
+
                     elSourceCloneRef.current = elSource.cloneNode(true) as HTMLElement;
                     elSourceRef.current = elSource;
+
+                    // Swap split element into the DOM
                     elSource.parentNode?.replaceChild(elSplit, elSource);
+
                     const blockBuckets = splitChars(elSplit, { graphemeSplitter });
+
                     fixKerning(elSource, elSplit, blockBuckets);
-                    splitLines(blockBuckets);
+
+                    splitLines(elSource, elSplit, blockBuckets);
+
                     cleanUp(elSplit, blockBuckets);
+
+                    // Swap source element into the DOM
                     elSplit.parentNode?.replaceChild(elSource, elSplit);
+
                     elSource.innerHTML = '';
                     moveChildNodes(elSplit, elSource);
                     elSource.dataset.type = elSplit.dataset.type;
