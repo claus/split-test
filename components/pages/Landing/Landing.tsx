@@ -47,7 +47,11 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                 </button>
                 {enabled ? " (it's ON)" : " (it's OFF)"}
                 <div className={styles.test}>
-                    <Romper enabled={fontLoaded && enabled} className={styles.original}>
+                    <Romper
+                        enabled={fontLoaded && enabled}
+                        doubleWrap="none"
+                        className={styles.original}
+                    >
                         <div>
                             Romper <ThumbsUpIcon /> supports <CheckIcon /> SVGs, images{' '}
                             <img src="/images/accordion.gif" width="220" height="220" alt="" /> and{' '}

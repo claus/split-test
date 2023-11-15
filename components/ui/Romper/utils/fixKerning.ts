@@ -69,9 +69,8 @@ export function fixKerning(
             while (siblingNode && siblingNode !== bPath[i]) {
                 if (siblingNode.nodeType === Node.ELEMENT_NODE) {
                     const siblingEl = siblingNode as HTMLElement;
-                    const spanEl: HTMLElement | null =
-                        siblingEl.querySelector(`[data-typeinternal]`);
-                    if (spanEl && spanEl?.dataset.typeinternal !== 'char') {
+                    const spanEl = siblingEl.querySelector<HTMLElement>(`[data-typeinternal]`);
+                    if (spanEl && spanEl.dataset.typeinternal !== 'char') {
                         // One of the siblings is a whitelisted element.
                         // Drop this pair.
                         return false;

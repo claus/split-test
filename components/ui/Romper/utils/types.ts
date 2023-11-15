@@ -12,6 +12,8 @@ export interface SplitOptions {
     adjustKerning?: boolean;
     /* Function to split a string into characters/graphemes. Default: string => [...string.normalize('NFC')] */
     graphemeSplitter?: (str: string) => string[];
+    /* Whether to double-wrap characters and/or lines. Default: 'none' */
+    doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
 }
 
 export interface NodeInfo {

@@ -52,7 +52,8 @@ export function createPath(root: HTMLElement, child: HTMLElement): HTMLElement[]
  * @param from - The source node
  * @param to - The destination node
  */
-export function moveChildNodes(from: Node, to: Node) {
+export function moveChildNodes(from: Node | null, to: Node | null) {
+    if (!from || !to) return;
     while (from.hasChildNodes()) {
         to.appendChild(from.removeChild(from.firstChild!));
     }

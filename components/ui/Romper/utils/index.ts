@@ -10,11 +10,8 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     // Work on a clone of the source element
     const elSplit = elSource.cloneNode(true) as HTMLElement;
 
-    // Swap split element into the DOM
-    elSource.parentNode?.replaceChild(elSplit, elSource);
-
     // Do the splitting
-    const blockBuckets = splitChars(elSplit, options);
+    const blockBuckets = splitChars(elSource, elSplit, options);
 
     // Swap source element back into the DOM
     elSplit.parentNode?.replaceChild(elSource, elSplit);
@@ -22,29 +19,42 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     // Fix the kerning
     fixKerning(elSource, elSplit, blockBuckets);
 
-    // Swap split element into the DOM
-    elSource.parentNode?.replaceChild(elSplit, elSource);
+    // Split lines and wrap them into spans
+    splitLines(elSource, elSplit, blockBuckets, options);
 
-    splitLines(elSource, elSplit, blockBuckets);
+    // Index chars and lines, add `data-type="romper"` to root element
+    cleanUp(elSource, elSplit, blockBuckets);
 
-    // Swap source element back into the DOM
-    elSplit.parentNode?.replaceChild(elSource, elSplit);
-
-    cleanUp(elSource, blockBuckets);
+    // Swap source element into the DOM if it isn't there already
+    if (elSplit.parentNode) {
+        elSplit.parentNode?.replaceChild(elSource, elSplit);
+    }
 
     console.timeEnd('split');
 
     return elSplit;
 }
 
-export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][] {
+export function splitChars(
+    elSource: Node,
+    elSplit: Node,
+    options: SplitOptions = {}
+): NodeInfoSplit[][] {
     console.time('splitChars');
+
+    if (elSource.parentNode) {
+        // Swap split element into the DOM
+        elSource.parentNode?.replaceChild(elSplit, elSource);
+    }
+
     const {
         graphemeSplitter = string => [...string.normalize('NFC')],
         whitelistSelectors = ['img', 'svg'],
+        doubleWrap = false,
     } = options;
+
     const iterator = walk(
-        node,
+        elSplit,
         (node: Node) =>
             node.nodeType === Node.TEXT_NODE ||
             // (node as HTMLElement).matches(whitelistSelectors.join(','))
@@ -71,18 +81,33 @@ export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][]
         // Wrap graphemes and whitelisted elements in spans
         .map(blockBucket =>
             blockBucket.map(nodeInfo => {
+                const doubleWrapChars = doubleWrap === 'chars' || doubleWrap === 'both';
                 if (nodeInfo.isWhitelisted) {
-                    const span = document.createElement('span') as HTMLSpanElement;
+                    const span = document.createElement('span');
                     span.dataset.typeinternal = 'whitelisted';
                     nodeInfo.node.parentNode?.replaceChild(span, nodeInfo.node);
-                    span.appendChild(nodeInfo.node);
+                    if (doubleWrapChars) {
+                        const span2 = document.createElement('span');
+                        span2.dataset.typeinternal = 'whitelisted-inner';
+                        span2.appendChild(nodeInfo.node);
+                        span.appendChild(span2);
+                    } else {
+                        span.appendChild(nodeInfo.node);
+                    }
                     return { ...nodeInfo, spans: [{ span }] };
                 } else {
                     const fragment = document.createDocumentFragment();
                     const spans = graphemeSplitter(nodeInfo.text!).map(char => {
                         const span = document.createElement('span') as HTMLSpanElement;
                         span.dataset.typeinternal = 'char';
-                        span.textContent = char;
+                        if (doubleWrapChars) {
+                            const span2 = document.createElement('span');
+                            span2.dataset.typeinternal = 'char-inner';
+                            span2.textContent = char;
+                            span.appendChild(span2);
+                        } else {
+                            span.textContent = char;
+                        }
                         fragment.appendChild(span);
                         return { span };
                     });
@@ -100,14 +125,18 @@ export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][]
 export function splitLines(
     elSource: HTMLElement,
     elSplit: HTMLElement,
-    blockBuckets: NodeInfoSplit[][]
+    blockBuckets: NodeInfoSplit[][],
+    options: SplitOptions = {}
 ): NodeInfoSplit[][] {
     console.time('splitLines');
 
-    if (!elSplit.parentNode) {
+    if (elSource.parentNode) {
         // Swap split element into the DOM
-        elSource.parentNode?.replaceChild(elSplit, elSource);
+        elSource.parentNode.replaceChild(elSplit, elSource);
     }
+
+    const { doubleWrap = 'none' } = options;
+    const doubleWrapLines = doubleWrap === 'lines' || doubleWrap === 'both';
 
     let line = 0;
     const blockBucketsMeasured = blockBuckets.map(blockBucket => {
@@ -159,14 +188,20 @@ export function splitLines(
     });
 
     lines.forEach(({ rootEl, isOneLiner, endSpan }) => {
-        const lineSpan = document.createElement('span');
+        const span = document.createElement('span');
+        span.dataset.typeinternal = 'line';
+        let lineSpan = span;
+        if (doubleWrapLines) {
+            lineSpan = document.createElement('span');
+            lineSpan.dataset.typeinternal = 'line-inner';
+            span.appendChild(lineSpan);
+        }
         if (isOneLiner) {
             moveChildNodes(rootEl, lineSpan);
         } else {
-            moveChildNodes(deepCloneUntil(rootEl, endSpan)!, lineSpan);
+            moveChildNodes(deepCloneUntil(rootEl, endSpan), lineSpan);
         }
-        lineSpan.dataset.type = 'line';
-        rootEl.appendChild(lineSpan);
+        rootEl.appendChild(span);
     });
 
     console.timeEnd('splitLines');
@@ -174,11 +209,20 @@ export function splitLines(
     return blockBucketsMeasured;
 }
 
-export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
+export function cleanUp(
+    elSource: HTMLElement,
+    elSplit: HTMLElement,
+    blockBuckets: NodeInfoSplit[][]
+) {
     console.time('cleanUp');
 
+    if (elSplit.parentNode) {
+        // Swap source element into the DOM
+        elSplit.parentNode?.replaceChild(elSource, elSplit);
+    }
+
+    // Process chars (and whitelisted elements)
     let charIndex = 0;
-    let lineIndex = 0;
     blockBuckets
         .reduce((acc, bucket) => {
             bucket.forEach(({ spans }) => {
@@ -199,6 +243,13 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
                 span.dataset.type = isSpace ? 'whitespace' : type;
                 delete span.dataset.typeinternal;
 
+                // Rename inner span's internal data type attribute to public facing one
+                const innerSpan = span.firstChild as HTMLElement;
+                if (innerSpan && innerSpan.nodeName === 'SPAN' && innerSpan.dataset.typeinternal) {
+                    innerSpan.dataset.type = innerSpan.dataset.typeinternal;
+                    delete innerSpan.dataset.typeinternal;
+                }
+
                 if (!isSpace) {
                     // The span contains either a whitelisted element or a letter:
                     // Index this span.
@@ -208,8 +259,22 @@ export function cleanUp(elSplit: HTMLElement, blockBuckets: NodeInfoSplit[][]) {
             }
         });
 
-    elSplit.querySelectorAll('[data-type="line"]').forEach((line) => {
-        (line as HTMLElement).style.setProperty('--line-index', lineIndex.toString());
+    // Process lines
+    let lineIndex = 0;
+    elSplit.querySelectorAll<HTMLElement>('[data-typeinternal="line"]').forEach(line => {
+        // Rename line's internal data type attribute to public facing one
+        line.dataset.type = line.dataset.typeinternal;
+        delete line.dataset.typeinternal;
+
+        // Rename inner line's internal data type attribute to public facing one
+        const innerSpan = line.firstChild as HTMLElement;
+        if (innerSpan && innerSpan.nodeName === 'SPAN' && innerSpan.dataset.typeinternal) {
+            innerSpan.dataset.type = innerSpan.dataset.typeinternal;
+            delete innerSpan.dataset.typeinternal;
+        }
+
+        // Index this line.
+        line.style.setProperty('--line-index', lineIndex.toString());
         lineIndex++;
     });
 

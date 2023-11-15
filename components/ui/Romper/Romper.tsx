@@ -11,8 +11,8 @@ import { moveChildNodes } from './utils/dom';
 interface RomperProps {
     as?: React.ElementType<any>;
     enabled?: boolean;
-    doubleWrap?: boolean;
     graphemeSplitter?: (str: string) => string[];
+    doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
     className?: string;
     children: React.ReactNode;
 }
@@ -21,8 +21,8 @@ const Romper: React.FC<RomperProps> = props => {
     const {
         as: Wrapper = 'div',
         enabled = false,
-        doubleWrap = false,
         graphemeSplitter = str => [...str.normalize('NFC')],
+        doubleWrap = 'none',
         className,
         children,
     } = props;
@@ -42,19 +42,27 @@ const Romper: React.FC<RomperProps> = props => {
                     elSourceCloneRef.current = elSource.cloneNode(true) as HTMLElement;
                     elSourceRef.current = elSource;
 
-                    // Swap split element into the DOM
-                    elSource.parentNode?.replaceChild(elSplit, elSource);
+                    // Split characters and wrap them into spans
+                    const blockBuckets = splitChars(elSource, elSplit, {
+                        graphemeSplitter,
+                        doubleWrap,
+                    });
 
-                    const blockBuckets = splitChars(elSplit, { graphemeSplitter });
-
+                    // Fix the kerning
                     fixKerning(elSource, elSplit, blockBuckets);
 
-                    splitLines(elSource, elSplit, blockBuckets);
+                    // Split lines and wrap them into spans
+                    splitLines(elSource, elSplit, blockBuckets, {
+                        doubleWrap,
+                    });
 
-                    cleanUp(elSplit, blockBuckets);
+                    // Index chars and lines, add `data-type="romper"` to root element
+                    cleanUp(elSource, elSplit, blockBuckets);
 
-                    // Swap source element into the DOM
-                    elSplit.parentNode?.replaceChild(elSource, elSplit);
+                    if (elSplit.parentNode) {
+                        // Swap source element into the DOM
+                        elSplit.parentNode?.replaceChild(elSource, elSplit);
+                    }
 
                     elSource.innerHTML = '';
                     moveChildNodes(elSplit, elSource);
@@ -86,7 +94,7 @@ const Romper: React.FC<RomperProps> = props => {
                 elSourceCloneRef.current = undefined;
             }
         },
-        [enabled, graphemeSplitter]
+        [enabled, graphemeSplitter, doubleWrap]
     );
 
     return (
