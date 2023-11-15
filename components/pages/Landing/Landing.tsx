@@ -2,6 +2,9 @@ import * as React from 'react';
 import cx from 'clsx';
 
 import Head from 'components/misc/Head';
+import Romper from '@/components/ui/Romper';
+import { Link } from '@madeinhaus/nextjs-page-transition';
+
 import CheckIcon from './svg/check';
 import HeartIcon from './svg/heart';
 import PersonIcon from './svg/person';
@@ -10,8 +13,6 @@ import ThumbsUpIcon from './svg/thumbsup';
 
 import grid from 'styles/modules/grid.module.scss';
 import styles from './Landing.module.scss';
-import { Link } from '@madeinhaus/nextjs-page-transition';
-import Romper from '@/components/ui/Romper';
 
 interface LandingProps {
     font: { style: { fontFamily: string } };
