@@ -28,6 +28,10 @@
         text-decoration: inherit;
     }
 
+    [data-type='char'] {
+        margin-right: var(--kerning);
+    }
+
     [data-type='line'] {
         display: block;
         width: fit-content;

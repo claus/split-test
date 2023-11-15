@@ -209,7 +209,7 @@ export function fixKerning(
         const { span } = elements[0];
         const kerningValue = keyToKerningValueMap.get(key);
         if (kerningValue) {
-            span.style.setProperty('margin-right', `${kerningValue}em`);
+            span.style.setProperty('--kerning', `${kerningValue}em`);
         }
     });
 
