@@ -34,9 +34,7 @@ const DoubleWrapChars: React.FC<DoubleWrapCharsProps> = ({ font }) => {
                         fixKerning={true}
                         className={styles.romper}
                     >
-                        <span>
-                            The quick brown fox jumps over the lazy dog who then walks away.
-                        </span>
+                        The quick brown fox jumps over the lazy dog who then walks away.
                     </Romper>
                 </div>
             </section>

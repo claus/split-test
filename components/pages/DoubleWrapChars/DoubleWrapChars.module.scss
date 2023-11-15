@@ -72,7 +72,7 @@
     text-align: center;
     text-wrap: balance;
 
-    --transform-0: -110%;
+    --transform-0: -150%;
     --transform-100: 0;
 
     &[data-type='romper'] {
@@ -93,8 +93,8 @@
             [data-type='whitelisted-inner'] {
                 display: inline-block;
                 text-decoration: inherit;
-                animation: reveal calc(var(--total-chars) * 0.012s)
-                    calc(300ms + var(--char-index) * 0.1s) both var(--ease-out-circ);
+                animation: reveal calc(var(--total-chars) * 0.05s)
+                    calc(300ms + var(--char-index) * 0.15s) both var(--ease-out-circ);
             }
         }
     }
@@ -102,10 +102,10 @@
 
 @keyframes reveal {
     0% {
-        transform: translateX(var(--transform-0));
+        transform: translateX(var(--transform-0)) scale(1.8);
     }
 
     100% {
-        transform: translateX(var(--transform-100));
+        transform: translateX(var(--transform-100)) scale(1);
     }
 }
