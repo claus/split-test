@@ -1,8 +1,5 @@
 import * as React from 'react';
 import cx from 'clsx';
-import Graphemer from 'graphemer';
-
-import { split } from './splitter';
 
 import Head from 'components/misc/Head';
 import CheckIcon from './svg/check';

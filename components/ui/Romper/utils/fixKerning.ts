@@ -6,7 +6,7 @@ export function fixKerning(
     elSource: HTMLElement,
     elSplit: HTMLElement,
     blockBuckets: NodeInfoSplit[][],
-    options: SplitOptions,
+    options: SplitOptions
 ): void {
     console.time('fixKerning');
 

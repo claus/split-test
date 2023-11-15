@@ -93,7 +93,7 @@ export function splitChars(node: Node, options: SplitOptions): NodeInfoSplit[][]
                 })
             )
     );
-};
+}
 
 export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
     let line = 0;
@@ -154,7 +154,7 @@ export function splitLines(blockBuckets: NodeInfoSplit[][]): NodeInfoSplit[][] {
     });
 
     return blockBucketsMeasured;
-};
+}
 
 function* walk(
     node: Node,

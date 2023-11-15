@@ -15,12 +15,12 @@
 
     [data-type='kern'] {
         font-kerning: normal;
-        font-feature-settings: "kern" on;
+        font-feature-settings: 'kern' on;
     }
 
     [data-type='nokern'] {
         font-kerning: none;
-        font-feature-settings: "kern" off;
+        font-feature-settings: 'kern' off;
     }
 
     [data-type='char'],
