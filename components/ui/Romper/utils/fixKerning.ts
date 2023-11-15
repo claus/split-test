@@ -15,9 +15,8 @@ export function fixKerning(
         return;
     }
 
-    const activeElement = elSource.parentNode ? 'source' : 'split';
-    if (activeElement === 'split') {
-        // Swap split element into the DOM
+    if (elSplit.parentNode) {
+        // Swap source element into the DOM
         elSplit.parentNode?.replaceChild(elSource, elSplit);
     }
 
@@ -162,9 +161,6 @@ export function fixKerning(
             wrapper: measureEl,
         };
     });
-    const measureElementMap = new Map<string, MeasureElement>(
-        measureElements.map(measureElement => [measureElement.key, measureElement])
-    );
     console.timeEnd('measureElements');
 
     console.time('cloneMeasure');
@@ -216,11 +212,6 @@ export function fixKerning(
             span.style.setProperty('margin-right', `${kerningValue}em`);
         }
     });
-
-    if (activeElement === 'split') {
-        // Swap split element into the DOM
-        elSource.parentNode?.replaceChild(elSplit, elSource);
-    }
 
     console.timeEnd('fixKerning');
 }

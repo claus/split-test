@@ -1,0 +1,111 @@
+@import 'styles/breakpoints';
+
+.root {
+    padding: 3rem 0;
+}
+
+.section {
+    grid-column: 1 / -1;
+
+    &:not(:first-of-type) {
+        margin-top: 3rem;
+    }
+}
+
+.sectionHeadline {
+    margin-bottom: 1rem;
+    font-size: 1.4em;
+}
+
+.themeButton {
+    display: block;
+    text-decoration: none;
+    padding: 0.5rem 0;
+
+    &[disabled] {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.toggle {
+    margin-right: 1rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid green;
+    border-radius: 0.6rem;
+}
+
+.container {
+    position: relative;
+    display: grid;
+    grid-area: 1 / -1;
+    margin-top: 3rem;
+
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 50px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    line-height: 1.1em;
+
+    @include medium {
+        font-size: 100px;
+    }
+
+    img,
+    svg {
+        display: inline;
+        position: relative;
+        top: 0.075em;
+        width: 0.85em;
+        height: 0.85em;
+        vertical-align: top;
+        color: currentcolor;
+    }
+
+    i {
+        font-style: normal;
+    }
+}
+
+.romper {
+    text-align: center;
+    text-wrap: balance;
+
+    --transform-0: -110%;
+    --transform-100: 0;
+
+    &[data-type='romper'] {
+        text-align: initial;
+        line-height: 0.95em;
+
+        [data-type='line'] {
+            text-align: center;
+            width: auto;
+        }
+
+        [data-type='char'],
+        [data-type='whitelisted'] {
+            position: relative;
+            overflow: hidden;
+
+            [data-type='char-inner'],
+            [data-type='whitelisted-inner'] {
+                display: inline-block;
+                text-decoration: inherit;
+                animation: reveal calc(var(--total-chars) * 0.012s)
+                    calc(300ms + var(--char-index) * 0.1s) both var(--ease-out-circ);
+            }
+        }
+    }
+}
+
+@keyframes reveal {
+    0% {
+        transform: translateX(var(--transform-0));
+    }
+
+    100% {
+        transform: translateX(var(--transform-100));
+    }
+}
