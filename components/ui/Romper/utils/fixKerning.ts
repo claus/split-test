@@ -1,13 +1,20 @@
 import { mappable } from '@madeinhaus/utils';
 import { createPath, toSelector } from './dom';
-import { NodeInfoSplit, Pair } from './types';
+import { NodeInfoSplit, Pair, SplitOptions } from './types';
 
 export function fixKerning(
     elSource: HTMLElement,
     elSplit: HTMLElement,
-    blockBuckets: NodeInfoSplit[][]
+    blockBuckets: NodeInfoSplit[][],
+    options: SplitOptions,
 ): void {
     console.time('fixKerning');
+
+    const { fixKerning = true } = options;
+    if (!fixKerning) {
+        return;
+    }
+
     const activeElement = elSource.parentNode ? 'source' : 'split';
     if (activeElement === 'split') {
         // Swap split element into the DOM

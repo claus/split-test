@@ -17,7 +17,7 @@ export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLEl
     elSplit.parentNode?.replaceChild(elSource, elSplit);
 
     // Fix the kerning
-    fixKerning(elSource, elSplit, blockBuckets);
+    fixKerning(elSource, elSplit, blockBuckets, options);
 
     // Split lines and wrap them into spans
     splitLines(elSource, elSplit, blockBuckets, options);
@@ -130,13 +130,17 @@ export function splitLines(
 ): NodeInfoSplit[][] {
     console.time('splitLines');
 
+    const { splitLines = true, doubleWrap = 'none' } = options;
+    if (!splitLines) {
+        return blockBuckets;
+    }
+
+    const doubleWrapLines = doubleWrap === 'lines' || doubleWrap === 'both';
+
     if (elSource.parentNode) {
         // Swap split element into the DOM
         elSource.parentNode.replaceChild(elSplit, elSource);
     }
-
-    const { doubleWrap = 'none' } = options;
-    const doubleWrapLines = doubleWrap === 'lines' || doubleWrap === 'both';
 
     let line = 0;
     const blockBucketsMeasured = blockBuckets.map(blockBucket => {

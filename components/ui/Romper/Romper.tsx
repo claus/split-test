@@ -13,6 +13,8 @@ interface RomperProps {
     enabled?: boolean;
     graphemeSplitter?: (str: string) => string[];
     doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
+    splitLines?: boolean;
+    fixKerning?: boolean;
     className?: string;
     children: React.ReactNode;
 }
@@ -23,6 +25,8 @@ const Romper: React.FC<RomperProps> = props => {
         enabled = false,
         graphemeSplitter = str => [...str.normalize('NFC')],
         doubleWrap = 'none',
+        splitLines: splitLinesProp = true,
+        fixKerning: fixKerningProp = true,
         className,
         children,
     } = props;
@@ -49,10 +53,13 @@ const Romper: React.FC<RomperProps> = props => {
                     });
 
                     // Fix the kerning
-                    fixKerning(elSource, elSplit, blockBuckets);
+                    fixKerning(elSource, elSplit, blockBuckets, {
+                        fixKerning: fixKerningProp,
+                    });
 
                     // Split lines and wrap them into spans
                     splitLines(elSource, elSplit, blockBuckets, {
+                        splitLines: splitLinesProp,
                         doubleWrap,
                     });
 
@@ -94,7 +101,7 @@ const Romper: React.FC<RomperProps> = props => {
                 elSourceCloneRef.current = undefined;
             }
         },
-        [enabled, graphemeSplitter, doubleWrap]
+        [enabled, graphemeSplitter, doubleWrap, splitLinesProp, fixKerningProp]
     );
 
     return (

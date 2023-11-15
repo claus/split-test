@@ -14,6 +14,10 @@ export interface SplitOptions {
     graphemeSplitter?: (str: string) => string[];
     /* Whether to double-wrap characters and/or lines. Default: 'none' */
     doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
+    /* Whether to split lines. Default: true */
+    splitLines?: boolean;
+    /* Whether to fix kerning. Default: true */
+    fixKerning?: boolean;
 }
 
 export interface NodeInfo {

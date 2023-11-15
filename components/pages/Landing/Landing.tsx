@@ -50,6 +50,8 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                     <Romper
                         enabled={fontLoaded && enabled}
                         doubleWrap="none"
+                        splitLines={true}
+                        fixKerning={true}
                         className={styles.original}
                     >
                         <div>
