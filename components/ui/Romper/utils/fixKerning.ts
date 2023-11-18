@@ -92,21 +92,11 @@ export function fixKerning(
             const { span: b, path: bPath } = elements[1];
 
             const measureEl = document.createElement('div');
-            const measureElStyles = [
-                { property: 'all', value: 'unset' },
-                { property: 'display', value: 'block' },
-                { property: 'white-space', value: 'pre' },
-                { property: 'width', value: 'fit-content' },
-            ];
-            measureElStyles.forEach(({ property, value }) => {
-                measureEl.style.setProperty(property, value);
-            });
-
-            let i = 0;
-            let currentRoot: HTMLElement = measureEl;
             const maxPathLen = Math.max(aPath.length, bPath.length);
 
             // Find the common root and reconstruct the DOM structure up to that point
+            let i = 0;
+            let currentRoot: HTMLElement = measureEl;
             while (aPath[i] === bPath[i] && i < maxPathLen) {
                 if (aPath[i]) {
                     const newRoot = aPath[i].cloneNode(false) as HTMLElement;
