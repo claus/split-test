@@ -97,6 +97,10 @@
                     calc(300ms + var(--char-index) * 0.01s) both var(--ease-out-circ);
             }
         }
+
+        [data-type='whitespace'] {
+            overflow: hidden;
+        }
     }
 }
 

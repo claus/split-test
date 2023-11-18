@@ -1,19 +1,19 @@
-@import 'styles/breakpoints';
-@import 'styles/fonts';
-
-.root {
+:where(.root) {
     &[data-type='romper'] {
         font-feature-settings: 'kern' off;
     }
 
-    [data-type='char'] {
-        display: inline-block;
-        text-decoration: inherit;
-    }
-
     [data-type='char'],
     [data-type='whitespace'] {
-        margin-right: var(--kerning);
+        display: inline-block;
+        margin-right: var(--kerning, 0);
+        text-decoration: inherit;
+        vertical-align: top;
+    }
+
+    [data-type='whitespace']:not(:first-of-type, :last-of-type) {
+        white-space: pre;
+        text-decoration: inherit;
     }
 
     [data-type='line'] {
