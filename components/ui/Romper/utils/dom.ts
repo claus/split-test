@@ -54,11 +54,7 @@ export function createPath(root: HTMLElement, child: HTMLElement): HTMLElement[]
  */
 export function moveChildNodes(from: Node | null, to: Node | null) {
     if (!from || !to) return;
-    const fragment = document.createDocumentFragment();
-    while (from.hasChildNodes()) {
-        fragment.appendChild(from.removeChild(from.firstChild!));
-    }
-    to.appendChild(fragment);
+    (to as Element).replaceChildren(...Array.from(from.childNodes));
 }
 
 export function deepCloneUntil(node: Node, lastNode: Node, initialNode?: Node) {
