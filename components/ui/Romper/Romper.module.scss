@@ -24,6 +24,13 @@
     [data-type='kern'],
     [data-type='nokern'] {
         position: absolute;
+
+        > div {
+            all: unset;
+            display: block;
+            white-space: pre;
+            width: fit-content;
+        }
     }
 
     [data-type='kern'] {

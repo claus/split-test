@@ -55,6 +55,7 @@ const Romper: React.FC<RomperProps> = props => {
                         kerningCache,
                         kerningCacheKey,
                         fixKerning: fixKerningProp,
+                        doubleWrap,
                     });
 
                     // Split lines and wrap them into spans

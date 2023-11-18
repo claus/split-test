@@ -14,6 +14,7 @@ export function fixKerning(
         fixKerning = true,
         kerningCache = new Map<string, number>(),
         kerningCacheKey = (a: string, b: string) => `romper # ${a} # ${b}`,
+        doubleWrap = false,
     } = options;
 
     if (!fixKerning) {
@@ -116,12 +117,21 @@ export function fixKerning(
                 currentRoot: HTMLElement
             ) {
                 while (path[index]) {
-                    const el = path[index++];
-                    const newEl = (
-                        el === span ? el.firstChild?.cloneNode(true) : el.cloneNode(false)
-                    ) as HTMLElement;
+                    let newEl;
+                    const el = path[index];
+                    if (el === span) {
+                        const child = el.firstChild as HTMLElement;
+                        if (doubleWrap === 'chars' || doubleWrap === 'both') {
+                            newEl = child.firstChild!.cloneNode(false) as HTMLElement;
+                        } else {
+                            newEl = child.cloneNode(false) as HTMLElement;
+                        }
+                    } else {
+                        newEl = el.cloneNode(false) as HTMLElement;
+                    }
                     currentRoot.appendChild(newEl);
                     currentRoot = newEl;
+                    index++;
                 }
             }
             reconstruct(i, aPath, a, currentRoot);
