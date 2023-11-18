@@ -44,13 +44,13 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                     Toggle Romper
                 </button>
                 {enabled ? " (it's ON)" : " (it's OFF)"}
-                <div className={styles.test}>
+                <div className={styles.container}>
                     <Romper
                         enabled={fontLoaded && enabled}
                         doubleWrap="none"
                         splitLines={true}
                         fixKerning={true}
-                        className={styles.original}
+                        className={styles.romper}
                     >
                         <div>
                             Romper <ThumbsUpIcon /> supports <CheckIcon /> SVGs, images{' '}
