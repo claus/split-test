@@ -13,6 +13,7 @@ interface DoubleWrapCharsProps {
 
 const DoubleWrapChars: React.FC<DoubleWrapCharsProps> = ({ font }) => {
     const [enabled, setEnabled] = React.useState(true);
+    const kerningCache = React.useRef(new Map<string, number>());
 
     const toggle = React.useCallback(() => {
         setEnabled(!enabled);
@@ -32,6 +33,7 @@ const DoubleWrapChars: React.FC<DoubleWrapCharsProps> = ({ font }) => {
                         doubleWrap="chars"
                         splitLines={true}
                         fixKerning={true}
+                        kerningCache={kerningCache.current}
                         className={styles.romper}
                     >
                         The quick brown fox jumps over the lazy dog who then walks away.

@@ -1,17 +1,14 @@
 export interface SplitOptions {
-    /* */
-    dataTypeName?: string;
-    /* */
-    dataTypeWhitespace?: string;
-    /* The custom property added to span wrappers to get the index. Default: "--index"  */
-    indexCustomProp?: string;
-    totalCustomProp?: string;
     /* Whitelist of selectors to wrap in spans. Default: ["img", "svg"] */
     whitelistSelectors?: string[];
     /* Whether to adjust kerning. Default: true */
     adjustKerning?: boolean;
     /* Function to split a string into characters/graphemes. Default: string => [...string.normalize('NFC')] */
     graphemeSplitter?: (str: string) => string[];
+    /* Cache map object to store key/kerning pairs */
+    kerningCache?: Map<string, number>;
+    /* Key to store kerning values under in `kerningCache`. Default: `${key}-${a}-${b}` */
+    kerningCacheKey?: (a: string, b: string) => string;
     /* Whether to double-wrap characters and/or lines. Default: 'none' */
     doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
     /* Whether to split lines. Default: true */

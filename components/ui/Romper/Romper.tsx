@@ -1,32 +1,30 @@
 import * as React from 'react';
 import cx from 'clsx';
 
-import { cleanUp } from './utils';
-
-import styles from './Romper.module.scss';
-import { splitChars, splitLines } from './utils';
+import { splitChars, splitLines, cleanUp } from './utils';
 import { fixKerning } from './utils/fixKerning';
 import { moveChildNodes } from './utils/dom';
+import { SplitOptions } from './utils/types';
 
-interface RomperProps {
+import styles from './Romper.module.scss';
+
+interface RomperProps extends SplitOptions {
     as?: React.ElementType<any>;
     enabled?: boolean;
-    graphemeSplitter?: (str: string) => string[];
-    doubleWrap?: 'none' | 'chars' | 'lines' | 'both';
-    splitLines?: boolean;
-    fixKerning?: boolean;
     className?: string;
     children: React.ReactNode;
 }
 
 const Romper: React.FC<RomperProps> = props => {
     const {
-        as: Wrapper = 'div',
+        as: Container = 'div',
         enabled = false,
         graphemeSplitter = str => [...str.normalize('NFC')],
-        doubleWrap = 'none',
+        kerningCache = new Map<string, number>(),
+        kerningCacheKey = (a: string, b: string) => `romper-${a}-${b}`,
         splitLines: splitLinesProp = true,
         fixKerning: fixKerningProp = true,
+        doubleWrap = 'none',
         className,
         children,
     } = props;
@@ -54,6 +52,8 @@ const Romper: React.FC<RomperProps> = props => {
 
                     // Fix the kerning
                     fixKerning(elSource, elSplit, blockBuckets, {
+                        kerningCache,
+                        kerningCacheKey,
                         fixKerning: fixKerningProp,
                     });
 
@@ -101,13 +101,21 @@ const Romper: React.FC<RomperProps> = props => {
                 elSourceCloneRef.current = undefined;
             }
         },
-        [enabled, graphemeSplitter, doubleWrap, splitLinesProp, fixKerningProp]
+        [
+            enabled,
+            graphemeSplitter,
+            kerningCache,
+            kerningCacheKey,
+            doubleWrap,
+            splitLinesProp,
+            fixKerningProp,
+        ]
     );
 
     return (
-        <Wrapper ref={wrapperRef} className={cx(styles.root, className)}>
+        <Container ref={wrapperRef} className={cx(styles.root, className)}>
             {children}
-        </Wrapper>
+        </Container>
     );
 };
 

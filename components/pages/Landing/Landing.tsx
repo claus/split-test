@@ -21,6 +21,7 @@ interface LandingProps {
 const Landing: React.FC<LandingProps> = ({ font }) => {
     const [fontLoaded, setFontLoaded] = React.useState(false);
     const [enabled, setEnabled] = React.useState(true);
+    const kerningCache = React.useRef(new Map<string, number>());
 
     const toggle = React.useCallback(() => {
         setEnabled(!enabled);
@@ -50,6 +51,7 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                         doubleWrap="none"
                         splitLines={true}
                         fixKerning={true}
+                        kerningCache={kerningCache.current}
                         className={styles.romper}
                     >
                         <div>

@@ -6,6 +6,21 @@
         font-feature-settings: 'kern' off;
     }
 
+    [data-type='char'] {
+        display: inline-block;
+        text-decoration: inherit;
+    }
+
+    [data-type='char'],
+    [data-type='whitespace'] {
+        margin-right: var(--kerning);
+    }
+
+    [data-type='line'] {
+        display: block;
+        width: fit-content;
+    }
+
     [data-type='kern'],
     [data-type='nokern'] {
         position: absolute;
@@ -19,20 +34,5 @@
     [data-type='nokern'] {
         font-kerning: none;
         font-feature-settings: 'kern' off;
-    }
-
-    [data-type='char'],
-    [data-type='whitelisted'] {
-        display: inline-block;
-        text-decoration: inherit;
-    }
-
-    [data-type='char'] {
-        margin-right: var(--kerning);
-    }
-
-    [data-type='line'] {
-        display: block;
-        width: fit-content;
     }
 }

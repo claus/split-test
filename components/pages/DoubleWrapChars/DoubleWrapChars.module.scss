@@ -93,8 +93,8 @@
             [data-type='whitelisted-inner'] {
                 display: inline-block;
                 text-decoration: inherit;
-                animation: reveal calc(var(--total-chars) * 0.05s)
-                    calc(300ms + var(--char-index) * 0.15s) both var(--ease-out-circ);
+                animation: reveal calc(var(--total-chars) * 0.01s)
+                    calc(300ms + var(--char-index) * 0.01s) both var(--ease-out-circ);
             }
         }
     }
