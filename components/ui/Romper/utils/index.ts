@@ -4,6 +4,8 @@ import { deepCloneUntil, moveChildNodes } from './dom';
 
 const BLOCK_LEVEL_DISPLAY_VALUES = ['block', 'flex', 'grid', 'table', 'list-item', 'flow-root'];
 
+const WHITESPACE_REGEXP = /[ \n\t\u200B\u200E\u200F\uFEFF]+/;
+
 export function split(elSource: HTMLElement, options: SplitOptions = {}): HTMLElement {
     console.time('split');
 
@@ -97,9 +99,9 @@ export function splitChars(
                 } else {
                     const fragment = document.createDocumentFragment();
                     const spans = graphemeSplitter(nodeInfo.text!).map(char => {
-                        const span = document.createElement('span') as HTMLSpanElement;
+                        const span = document.createElement('span');
                         span.dataset.typeinternal = 'char';
-                        if (doubleWrapChars) {
+                        if (doubleWrapChars && !char.match(WHITESPACE_REGEXP)) {
                             const span2 = document.createElement('span');
                             span2.dataset.typeinternal = 'char-inner';
                             span2.textContent = char;
@@ -239,7 +241,7 @@ export function cleanUp(
             const type = span.dataset.typeinternal;
             const isChar = type === 'char';
             const isWhitelisted = type === 'whitelisted';
-            const isSpace = isChar && span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
+            const isSpace = isChar && span.textContent?.match(WHITESPACE_REGEXP);
             if (isChar || isWhitelisted) {
                 // Rename internal data type attribute to public facing one
                 // and set the value to 'space' if it's a whitespace character

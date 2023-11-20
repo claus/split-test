@@ -122,7 +122,11 @@ export function fixKerning(
                     if (el === span) {
                         const child = el.firstChild as HTMLElement;
                         if (doubleWrap === 'chars' || doubleWrap === 'both') {
-                            newEl = child.firstChild!.cloneNode(false) as HTMLElement;
+                            if (child.hasChildNodes()) {
+                                newEl = child.firstChild!.cloneNode(false) as HTMLElement;
+                            } else {
+                                newEl = child.cloneNode(true) as HTMLElement;
+                            }
                         } else {
                             newEl = child.cloneNode(false) as HTMLElement;
                         }
