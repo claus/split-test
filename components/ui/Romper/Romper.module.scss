@@ -7,7 +7,6 @@
     [data-type='space'],
     [data-type='whitelisted'] {
         margin-right: var(--kerning, 0);
-        text-decoration: inherit;
     }
 
     [data-type='space']:first-of-type,
@@ -22,6 +21,7 @@
         [data-type='space'],
         [data-type='whitelisted'] {
             display: inline-block;
+            text-decoration: inherit;
             vertical-align: top;
         }
 
