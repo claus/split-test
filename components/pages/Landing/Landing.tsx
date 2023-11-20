@@ -49,7 +49,7 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                     <Romper
                         enabled={fontLoaded && enabled}
                         doubleWrap="none"
-                        splitLines={true}
+                        splitLines={false}
                         fixKerning={true}
                         kerningCache={kerningCache.current}
                         className={styles.romper}
