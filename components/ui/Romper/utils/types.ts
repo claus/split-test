@@ -15,6 +15,8 @@ export interface SplitOptions {
     splitLines?: boolean;
     /* Whether to fix kerning. Default: true */
     fixKerning?: boolean;
+    /* Show timings. Default: false */
+    debug?: boolean;
 }
 
 export interface NodeInfo {

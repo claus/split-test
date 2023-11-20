@@ -1,4 +1,3 @@
-import { mappable } from '@madeinhaus/utils';
 import { createPath, toSelector } from './dom';
 import { NodeInfoSplit, Pair, SplitOptions } from './types';
 
@@ -8,18 +7,19 @@ export function fixKerning(
     blockBuckets: NodeInfoSplit[][],
     options: SplitOptions
 ): void {
-    console.time('fixKerning');
-
     const {
         fixKerning = true,
         kerningCache = new Map<string, number>(),
         kerningCacheKey = (a: string, b: string) => `romper # ${a} # ${b}`,
         doubleWrap = false,
+        debug = false,
     } = options;
 
     if (!fixKerning) {
         return;
     }
+
+    debug && console.time('fixKerning');
 
     if (elSplit.parentNode) {
         // Swap source element into the DOM
@@ -87,7 +87,7 @@ export function fixKerning(
         // in a div for measuring the "kerning" (the difference in width
         // between one of the clones rendered with `kerning: normal` and
         // the other with `kerning: none`.
-        console.time('measureElements');
+        debug && console.time('measureElements');
         const measureElements: MeasureElement[] = uniquePairs.map(({ key, elements }) => {
             const { span: a, path: aPath } = elements[0];
             const { span: b, path: bPath } = elements[1];
@@ -151,17 +151,17 @@ export function fixKerning(
                 wrapper: measureEl,
             };
         });
-        console.timeEnd('measureElements');
+        debug && console.timeEnd('measureElements');
 
-        console.time('cloneMeasure');
+        debug && console.time('cloneMeasure');
         const measureDiv = document.createElement('div');
         measureElements.forEach(({ wrapper }) => {
             measureDiv.appendChild(wrapper);
         });
-        console.timeEnd('cloneMeasure');
+        debug && console.timeEnd('cloneMeasure');
 
-        console.time('measureKernings');
-        console.time('kern');
+        debug && console.time('measureKernings');
+        debug && console.time('kern');
         measureDiv.dataset.type = 'kern';
         elSplit.insertBefore(measureDiv, elSplit.firstChild);
         elSource.parentNode?.replaceChild(elSplit, elSource);
@@ -174,9 +174,9 @@ export function fixKerning(
             const fontSize = parseFloat(window.getComputedStyle(tmp).getPropertyValue('font-size'));
             return { kernWidth, fontSize };
         });
-        console.timeEnd('kern');
+        debug && console.timeEnd('kern');
 
-        console.time('nokern');
+        debug && console.time('nokern');
         measureDiv.dataset.type = 'nokern';
         measureElements.forEach(({ key, wrapper }, i) => {
             const { kernWidth, fontSize } = kerningData[i];
@@ -184,8 +184,8 @@ export function fixKerning(
             const kerningValue = (kernWidth - noKernWidth) / fontSize;
             kerningCache.set(key, kerningValue);
         });
-        console.timeEnd('nokern');
-        console.timeEnd('measureKernings');
+        debug && console.timeEnd('nokern');
+        debug && console.timeEnd('measureKernings');
 
         // Swap original element into the DOM
         elSplit.parentNode?.replaceChild(elSource, elSplit);
@@ -203,5 +203,5 @@ export function fixKerning(
         }
     });
 
-    console.timeEnd('fixKerning');
+    debug && console.timeEnd('fixKerning');
 }

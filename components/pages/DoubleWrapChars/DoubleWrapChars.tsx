@@ -29,6 +29,7 @@ const DoubleWrapChars: React.FC<DoubleWrapCharsProps> = ({ font }) => {
                 {enabled ? " (it's ON)" : " (it's OFF)"}
                 <div className={styles.container}>
                     <Romper
+                        debug
                         enabled={enabled}
                         doubleWrap="chars"
                         splitLines={true}

@@ -42,8 +42,6 @@ export function splitChars(
     elSplit: Node,
     options: SplitOptions = {}
 ): NodeInfoSplit[][] {
-    console.time('splitChars');
-
     if (elSource.parentNode) {
         // Swap split element into the DOM
         elSource.parentNode?.replaceChild(elSplit, elSource);
@@ -53,7 +51,10 @@ export function splitChars(
         graphemeSplitter = string => [...string.normalize('NFC')],
         whitelistSelectors = ['img', 'svg'],
         doubleWrap = 'none',
+        debug = false,
     } = options;
+
+    debug && console.time('splitChars');
 
     const iterator = walk(
         elSplit,
@@ -118,7 +119,7 @@ export function splitChars(
             })
         );
 
-    console.timeEnd('splitChars');
+    debug && console.timeEnd('splitChars');
 
     return nodeInfoSplit;
 }
@@ -129,12 +130,13 @@ export function splitLines(
     blockBuckets: NodeInfoSplit[][],
     options: SplitOptions = {}
 ): NodeInfoSplit[][] {
-    const { splitLines = true, doubleWrap = 'none' } = options;
+    const { splitLines = true, doubleWrap = 'none', debug = false } = options;
+
     if (!splitLines) {
         return blockBuckets;
     }
 
-    console.time('splitLines');
+    debug && console.time('splitLines');
 
     const doubleWrapLines = doubleWrap === 'lines' || doubleWrap === 'both';
 
@@ -209,7 +211,7 @@ export function splitLines(
         rootEl.appendChild(span);
     });
 
-    console.timeEnd('splitLines');
+    debug && console.timeEnd('splitLines');
 
     return blockBucketsMeasured;
 }
@@ -217,9 +219,12 @@ export function splitLines(
 export function cleanUp(
     elSource: HTMLElement,
     elSplit: HTMLElement,
-    blockBuckets: NodeInfoSplit[][]
+    blockBuckets: NodeInfoSplit[][],
+    options: SplitOptions = {}
 ) {
-    console.time('cleanUp');
+    const { debug = false } = options;
+
+    debug && console.time('cleanUp');
 
     if (elSplit.parentNode) {
         // Swap source element into the DOM
@@ -287,7 +292,7 @@ export function cleanUp(
     elSplit.style.setProperty('--total-chars', charIndex.toString());
     elSplit.style.setProperty('--total-lines', lineIndex.toString());
 
-    console.timeEnd('cleanUp');
+    debug && console.timeEnd('cleanUp');
 }
 
 function* walk(

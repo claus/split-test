@@ -47,6 +47,7 @@ const Landing: React.FC<LandingProps> = ({ font }) => {
                 {enabled ? " (it's ON)" : " (it's OFF)"}
                 <div className={styles.container}>
                     <Romper
+                        debug
                         enabled={fontLoaded && enabled}
                         doubleWrap="none"
                         splitLines={false}

@@ -25,6 +25,7 @@ const Romper: React.FC<RomperProps> = props => {
         splitLines: splitLinesProp = true,
         fixKerning: fixKerningProp = true,
         doubleWrap = 'none',
+        debug = false,
         className,
         children,
     } = props;
@@ -35,7 +36,7 @@ const Romper: React.FC<RomperProps> = props => {
 
     const split = React.useCallback(
         (elSource: HTMLElement) => {
-            console.time('split');
+            debug && console.time('split');
 
             // Work on a clone of the source element
             const elSplit = elSource.cloneNode(true) as HTMLElement;
@@ -47,6 +48,7 @@ const Romper: React.FC<RomperProps> = props => {
             const blockBuckets = splitChars(elSource, elSplit, {
                 graphemeSplitter,
                 doubleWrap,
+                debug,
             });
 
             // Fix the kerning
@@ -55,12 +57,14 @@ const Romper: React.FC<RomperProps> = props => {
                 kerningCacheKey,
                 fixKerning: fixKerningProp,
                 doubleWrap,
+                debug,
             });
 
             // Split lines and wrap them into spans
             splitLines(elSource, elSplit, blockBuckets, {
                 splitLines: splitLinesProp,
                 doubleWrap,
+                debug,
             });
 
             // Index chars and lines,
@@ -76,7 +80,7 @@ const Romper: React.FC<RomperProps> = props => {
                 elSplit.parentNode?.replaceChild(elSource, elSplit);
             }
 
-            console.timeEnd('split');
+            debug && console.timeEnd('split');
         },
         [
             graphemeSplitter,
@@ -85,20 +89,23 @@ const Romper: React.FC<RomperProps> = props => {
             doubleWrap,
             splitLinesProp,
             fixKerningProp,
+            debug,
         ]
     );
 
     const resizeObserverCallback = React.useCallback(
         ([entry]: ResizeObserverEntry[]) => {
             if (elSourceRef.current && elSourceCloneRef.current) {
-                moveChildNodes(elSourceCloneRef.current, elSourceRef.current);
-                moveAttributes(elSourceCloneRef.current, elSourceRef.current);
-                split(elSourceRef.current);
+                if (splitLinesProp) {
+                    moveChildNodes(elSourceCloneRef.current, elSourceRef.current);
+                    moveAttributes(elSourceCloneRef.current, elSourceRef.current);
+                    split(elSourceRef.current);
+                }
             } else {
                 split(entry.target as HTMLElement);
             }
         },
-        [split]
+        [split, splitLinesProp]
     );
 
     const wrapperRef = React.useCallback(
