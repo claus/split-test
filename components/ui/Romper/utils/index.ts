@@ -57,7 +57,6 @@ export function splitChars(
         elSplit,
         (node: Node) =>
             node.nodeType === Node.TEXT_NODE ||
-            // (node as HTMLElement).matches(whitelistSelectors.join(','))
             whitelistSelectors.includes(node.nodeName.toLowerCase())
     );
     const nodeInfoSplit = [...iterator]
@@ -298,12 +297,32 @@ function* walk(
         case Node.TEXT_NODE: {
             if (matcher(node) && node.parentNode) {
                 // This is a matching text node:
-                yield {
-                    node,
-                    isWhitelisted: false,
-                    nearestBlockLevelParent,
-                    text: node.textContent ?? '',
-                };
+                if (node.parentNode.childNodes.length === 1) {
+                    // This is the only child of its parent
+                    // It's safe to get innerText directly from the parent
+                    yield {
+                        node,
+                        isWhitelisted: false,
+                        nearestBlockLevelParent,
+                        text: (node.parentNode as HTMLElement).innerText,
+                    };
+                } else {
+                    // Wrap nodeValue in a temporary span
+                    // This will get us the innerText
+                    const spanTmp = document.createElement('span');
+                    spanTmp.textContent = node.textContent;
+                    spanTmp.style.setProperty('all', 'unset');
+                    node.parentNode.replaceChild(spanTmp, node);
+                    const text = spanTmp.innerText;
+                    // Swap the original node back in
+                    spanTmp.parentNode!.replaceChild(node, spanTmp);
+                    yield {
+                        node,
+                        isWhitelisted: false,
+                        nearestBlockLevelParent,
+                        text,
+                    };
+                }
             }
             break;
         }
