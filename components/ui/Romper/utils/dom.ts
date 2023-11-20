@@ -53,8 +53,48 @@ export function createPath(root: HTMLElement, child: HTMLElement): HTMLElement[]
  * @param to - The destination node
  */
 export function moveChildNodes(from: Node | null, to: Node | null) {
+    if (!(to instanceof Element)) return;
     if (!from || !to) return;
     (to as Element).replaceChildren(...Array.from(from.childNodes));
+}
+
+/**
+ * Merge attributes of node `from` with those of node `to`.
+ *
+ * @param from - The source node
+ * @param to - The destination node
+ */
+export function mergeAttributes(from: Node | null, to: Node | null) {
+    if (!(from instanceof HTMLElement) || !(to instanceof HTMLElement)) return;
+    const toEl = to as HTMLElement;
+    const fromEl = from as HTMLElement;
+    fromEl.classList.forEach(className => {
+        toEl.classList.add(className);
+    });
+    for (let i = 0; i < fromEl.style.length; i++) {
+        const name = fromEl.style[i];
+        toEl.style.setProperty(name, fromEl.style.getPropertyValue(name));
+    }
+    for (const { name, value } of fromEl.attributes) {
+        if (name !== 'style' && name !== 'id' && name !== 'class') {
+            toEl.setAttribute(name, value);
+        }
+    }
+}
+
+/**
+ * Replaces attributes of node `to` with those of node `from`.
+ *
+ * @param from - The source node
+ * @param to - The destination node
+ */
+export function moveAttributes(from: Node | null, to: Node | null) {
+    if (!(from instanceof HTMLElement) || !(to instanceof HTMLElement)) return;
+    const toEl = to as HTMLElement;
+    toEl.getAttributeNames().forEach(name => {
+        toEl.removeAttribute(name);
+    });
+    mergeAttributes(from, to);
 }
 
 export function deepCloneUntil(node: Node, lastNode: Node, initialNode?: Node) {

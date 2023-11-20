@@ -4,21 +4,41 @@
     }
 
     [data-type='char'],
-    [data-type='space'] {
-        display: inline-block;
+    [data-type='space'],
+    [data-type='whitelisted'] {
         margin-right: var(--kerning, 0);
         text-decoration: inherit;
-        vertical-align: top;
     }
 
-    [data-type='space']:not(:first-of-type, :last-of-type) {
-        white-space: pre;
-        text-decoration: inherit;
+    [data-type='space']:first-of-type,
+    [data-type='space']:last-of-type {
+        margin-right: 0;
     }
 
     [data-type='line'] {
         display: block;
-        width: fit-content;
+
+        [data-type='char'],
+        [data-type='space'],
+        [data-type='whitelisted'] {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        [data-type='char'],
+        [data-type='whitelisted'] {
+            position: relative;
+
+            [data-type='char-inner'],
+            [data-type='whitelisted-inner'] {
+                display: inline-block;
+                text-decoration: inherit;
+            }
+        }
+
+        [data-type='space']:not(:first-of-type, :last-of-type) {
+            white-space: pre;
+        }
     }
 
     [data-type='kern'],

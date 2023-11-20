@@ -52,7 +52,7 @@ export function splitChars(
     const {
         graphemeSplitter = string => [...string.normalize('NFC')],
         whitelistSelectors = ['img', 'svg'],
-        doubleWrap = false,
+        doubleWrap = 'none',
     } = options;
 
     const iterator = walk(
@@ -129,12 +129,12 @@ export function splitLines(
     blockBuckets: NodeInfoSplit[][],
     options: SplitOptions = {}
 ): NodeInfoSplit[][] {
-    console.time('splitLines');
-
     const { splitLines = true, doubleWrap = 'none' } = options;
     if (!splitLines) {
         return blockBuckets;
     }
+
+    console.time('splitLines');
 
     const doubleWrapLines = doubleWrap === 'lines' || doubleWrap === 'both';
 

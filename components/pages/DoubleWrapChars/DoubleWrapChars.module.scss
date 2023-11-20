@@ -45,8 +45,10 @@
     font-size: 50px;
     font-weight: 700;
     letter-spacing: -0.04em;
-    text-transform: uppercase;
     line-height: 1.1em;
+    text-transform: uppercase;
+    text-align: center;
+    text-wrap: balance;
 
     @include medium {
         font-size: 100px;
@@ -69,46 +71,27 @@
 }
 
 .romper {
-    text-align: center;
-    text-wrap: balance;
-
-    --transform-0: -150%;
-    --transform-100: 0;
-
     &[data-type='romper'] {
-        text-align: initial;
-
-        [data-type='line'] {
-            text-align: center;
-            width: auto;
-        }
-
         [data-type='char'],
+        [data-type='space'],
         [data-type='whitelisted'] {
-            position: relative;
             overflow: hidden;
-
-            [data-type='char-inner'],
-            [data-type='whitelisted-inner'] {
-                display: inline-block;
-                text-decoration: inherit;
-                animation: reveal calc(var(--total-chars) * 0.05s)
-                    calc(300ms + var(--char-index) * 0.15s) both var(--ease-out-circ);
-            }
         }
 
-        [data-type='whitespace'] {
-            overflow: hidden;
+        [data-type='char-inner'],
+        [data-type='whitelisted-inner'] {
+            animation: reveal calc(var(--total-chars) * 0.05s)
+                calc(300ms + var(--char-index) * 0.15s) both var(--ease-out-circ);
         }
     }
 }
 
 @keyframes reveal {
     0% {
-        transform: translateX(var(--transform-0)) scale(1.8);
+        transform: translateX(-150%) scale(1.8);
     }
 
     100% {
-        transform: translateX(var(--transform-100)) scale(1);
+        transform: translateX(0) scale(1);
     }
 }
