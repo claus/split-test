@@ -243,8 +243,8 @@ export function cleanUp(
             const isSpace = isChar && span.textContent?.match(/[ \n\t\u200B\u200E\u200F\uFEFF]+/);
             if (isChar || isWhitelisted) {
                 // Rename internal data type attribute to public facing one
-                // and set the value to 'whitespace' if it's a whitespace character
-                span.dataset.type = isSpace ? 'whitespace' : type;
+                // and set the value to 'space' if it's a whitespace character
+                span.dataset.type = isSpace ? 'space' : type;
                 delete span.dataset.typeinternal;
 
                 // Rename inner span's internal data type attribute to public facing one

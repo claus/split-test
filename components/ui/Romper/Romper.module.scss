@@ -4,14 +4,14 @@
     }
 
     [data-type='char'],
-    [data-type='whitespace'] {
+    [data-type='space'] {
         display: inline-block;
         margin-right: var(--kerning, 0);
         text-decoration: inherit;
         vertical-align: top;
     }
 
-    [data-type='whitespace']:not(:first-of-type, :last-of-type) {
+    [data-type='space']:not(:first-of-type, :last-of-type) {
         white-space: pre;
         text-decoration: inherit;
     }
